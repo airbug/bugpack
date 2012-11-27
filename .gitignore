@@ -11,4 +11,17 @@ pids
 logs
 results
 
+# node.js resources
+node_modules
 npm-debug.log
+
+# IntelliJ resources
+*.iml
+*.ipr
+*.iws
+
+#mac
+.DS_Store
+
+#buildbug
+.buildbug
