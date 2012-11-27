@@ -1,3 +1,6 @@
 {
-
+    "name": "bugjar",
+    "version": "0.0.1",
+    "main": "./lib/BugJar.js",
+    "private": true
 }
