@@ -1,6 +1,6 @@
 {
     "name": "bugpack",
     "version": "0.0.1",
-    "main": "./lib/BugPack.js",
+    "main": "./lib/BugPackNode.js",
     "private": true
 }
