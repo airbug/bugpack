@@ -33,7 +33,7 @@ var nodejs = enableModule("nodejs");
 buildProperties({
     packageJson: {
         "name": "bugpack",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "main": "./lib/BugPackNode.js",
         "private": true
     },
