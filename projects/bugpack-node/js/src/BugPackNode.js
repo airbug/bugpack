@@ -312,12 +312,18 @@ BugPack.loadRegistrySync = function() {
             var registryPath = path.dirname(registryFilePath);
             var registryPacks = JSON.parse(registryContents);
             for (var packName in registryPacks) {
+
+                // NOTE BRN: We do not throw an error for duplicate packs because we have not figured out how to deal
+                // with node js modules that are using the same packs. (this causes duplicates)
+
                 var registryPack = registryPacks[packName];
-                if (_this.registeredPacks[packName]) {
-                    throw new Error("Duplicate pack name '" + packName + "'");
+                if (!_this.registeredPacks[packName]) {
+                    registryPack.registryPath = registryPath;
+                    _this.registeredPacks[packName] = registryPack;
+                } else {
+                    console.log("Duplicate pack name found '" + packName + "'. Ignoring pack located at '" +
+                        registryPack.path + "'");
                 }
-                registryPack.registryPath = registryPath;
-                _this.registeredPacks[packName] = registryPack;
             }
         });
     } else {
