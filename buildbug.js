@@ -72,7 +72,8 @@ buildTarget("local").buildFlow(
         }),
         targetTask("packNodePackage", {
             properties: {
-                packageName: buildProject.getProperties().name
+                packageName: buildProject.getProperties().packageJson.name,
+                packageVersion: buildProject.getProperties().packageJson.version
             }
         }),
         targetTask("s3EnsureBucket", {
@@ -80,7 +81,7 @@ buildTarget("local").buildFlow(
                 bucket: "node_modules"
             }
         }),
-        targetTask("s3PutObject", {
+        targetTask("s3PutFile", {
             init: function(task, buildProject, properties) {
                 var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperties().packageJson.name,
                     buildProject.getProperties().packageJson.version);
