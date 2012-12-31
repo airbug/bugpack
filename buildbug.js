@@ -86,7 +86,10 @@ buildTarget("local").buildFlow(
                 var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperties().packageJson.name,
                     buildProject.getProperties().packageJson.version);
                 task.updateProperties({
-                    file: packedNodePackage.getFilePath()
+                    file: packedNodePackage.getFilePath(),
+                    options: {
+                        ACL: 'public-read'
+                    }
                 });
             },
             properties: {
