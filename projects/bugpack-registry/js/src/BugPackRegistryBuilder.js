@@ -12,7 +12,7 @@ var path = require('path');
 // Declare Class
 //-------------------------------------------------------------------------------
 
-var RegistryBuilder = function(absoluteSourceRoot) {
+var BugPackRegistryBuilder = function(absoluteSourceRoot) {
 
     /**
      * @private
@@ -59,7 +59,7 @@ var RegistryBuilder = function(absoluteSourceRoot) {
 /**
  * @param {function()} callback
  */
-RegistryBuilder.prototype.build = function(callback) {
+BugPackRegistryBuilder.prototype.build = function(callback) {
     this.callback = callback;
     this.registry = {};
     this.startProcesses();
@@ -74,15 +74,95 @@ RegistryBuilder.prototype.build = function(callback) {
 
 /**
  * @private
+ * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
+ * @return {Array.<string>}
  */
-RegistryBuilder.prototype.findSourceFiles = function() {
-    this.sourceFiles = this.scanDirectoryForSourceFiles(this.absoluteSourceRoot, true);
+BugPackRegistryBuilder.prototype.findExports = function(annotations) {
+    var exports = [];
+    annotations.forEach(function(annotation) {
+        var name = annotation.name;
+        var arguments = annotation.arguments;
+        if (name === 'Export') {
+            var exportName = arguments[0];
+            exports.push(exportName);
+        }
+    });
+    return exports;
+};
+
+/**
+ * @private
+ * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
+ * @return {string}
+ */
+BugPackRegistryBuilder.prototype.findPackage = function(annotations) {
+    var packageFound = false;
+    var packageName = null;
+    annotations.forEach(function(annotation) {
+        var name = annotation.name;
+        var arguments = annotation.arguments;
+        if (name === 'Package') {
+            packageName = arguments[0];
+            if (packageName) {
+                if (!packageFound) {
+                    packageFound = true;
+                } else {
+                    throw new Error("Duplicate package declaration '" + packageName + "' in file.");
+                }
+            } else {
+                throw new Error("Package name is required for package declaration.");
+            }
+        }
+    });
+    return packageName;
+};
+
+/**
+ * @private
+ * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
+ * @return {Array.<string>}
+ */
+BugPackRegistryBuilder.prototype.findRequires = function(annotations) {
+    var requires = [];
+    annotations.forEach(function(annotation) {
+        var name = annotation.name;
+        var arguments = annotation.arguments;
+        if (name === 'Require') {
+            var requireName = arguments[0];
+            requires.push(requireName);
+        }
+    });
+    return requires;
 };
 
 /**
  * @private
  */
-RegistryBuilder.prototype.processSourceFiles = function() {
+BugPackRegistryBuilder.prototype.findSourceFiles = function() {
+    this.sourceFiles = this.scanDirectoryForSourceFiles(this.absoluteSourceRoot, true);
+};
+
+/**
+ * @private
+ * @param {string} sourceFile
+ * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
+ * @return {{name: string, path: string, annotations: Array.<*>}}
+ */
+BugPackRegistryBuilder.prototype.generatePack = function(sourceFile, annotations) {
+    var pack = {
+        path: path.relative(this.absoluteSourceRoot, sourceFile),
+        exports: this.findExports(annotations),
+        package: this.findPackage(annotations),
+        requires: this.findRequires(annotations),
+        annotations: annotations
+    };
+    return pack;
+};
+
+/**
+ * @private
+ */
+BugPackRegistryBuilder.prototype.processSourceFiles = function() {
     var _this = this;
     this.sourceFiles.forEach(function(sourceFile) {
         var registryBuilderProcess = _this.roundRobinNextProcess();
@@ -93,7 +173,7 @@ RegistryBuilder.prototype.processSourceFiles = function() {
 /**
  * @private
  */
-RegistryBuilder.prototype.roundRobinNextProcess = function() {
+BugPackRegistryBuilder.prototype.roundRobinNextProcess = function() {
     var numberProcesses = this.registryBuildProcesses.length;
     if (numberProcesses > 0) {
         this.roundRobinIndex++;
@@ -111,7 +191,7 @@ RegistryBuilder.prototype.roundRobinNextProcess = function() {
  * @param {boolean} scanRecursively (defaults to true)
  * @return {Array<string>}
  */
-RegistryBuilder.prototype.scanDirectoryForSourceFiles = function(directoryPathString, scanRecursively) {
+BugPackRegistryBuilder.prototype.scanDirectoryForSourceFiles = function(directoryPathString, scanRecursively) {
     if (scanRecursively === undefined) {
         scanRecursively = true;
     }
@@ -137,7 +217,7 @@ RegistryBuilder.prototype.scanDirectoryForSourceFiles = function(directoryPathSt
 /**
  * @private
  */
-RegistryBuilder.prototype.startProcesses = function() {
+BugPackRegistryBuilder.prototype.startProcesses = function() {
     var _this = this;
     var numCPUs = os.cpus().length;
     for (var i = 0; i < numCPUs; i++) {
@@ -152,31 +232,25 @@ RegistryBuilder.prototype.startProcesses = function() {
 /**
  * @private
  */
-RegistryBuilder.prototype.stopProcesses = function() {
+BugPackRegistryBuilder.prototype.stopProcesses = function() {
     while (this.registryBuildProcesses.length > 0) {
         var registryBuildProcess = this.registryBuildProcesses.pop();
         registryBuildProcess.kill();
     }
 };
 
-RegistryBuilder.prototype.handleChildMessage = function(message) {
+/**
+ * @private
+ * @param message
+ */
+BugPackRegistryBuilder.prototype.handleChildMessage = function(message) {
     var error = null;
     this.numberComplete++;
 
     if (!message.error) {
         var sourceFile = message.sourceFile;
-        var packName = path.basename(sourceFile);
-        if (message.packName) {
-            packName = message.packName;
-        }
-        var pack = {
-            name: packName,
-            path: path.relative(this.absoluteSourceRoot, sourceFile)
-        };
-        if (message.options) {
-            pack.options = message.options;
-        }
-        this.registry[packName] = pack;
+        var sourceFileRegistry = this.generatePack(sourceFile, message.annotations);
+        this.registry[sourceFileRegistry.path] = sourceFileRegistry;
     } else {
         error = new Error(message.message);
     }
@@ -189,8 +263,23 @@ RegistryBuilder.prototype.handleChildMessage = function(message) {
     }
 };
 
+
+//-------------------------------------------------------------------------------
+// Static Methods
+//-------------------------------------------------------------------------------
+
+/**
+ * @param {string} sourceRoot
+ * @param {function()} callback
+ */
+BugPackRegistryBuilder.buildRegistry = function(sourceRoot, callback) {
+    var registryBuilder = new BugPackRegistryBuilder(sourceRoot);
+    registryBuilder.build(callback);
+};
+
+
 //-------------------------------------------------------------------------------
 // Exports
 //-------------------------------------------------------------------------------
 
-module.exports = RegistryBuilder;
+module.exports = BugPackRegistryBuilder;
