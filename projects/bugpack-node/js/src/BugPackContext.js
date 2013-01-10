@@ -2,6 +2,8 @@
 // Requires
 //-------------------------------------------------------------------------------
 
+var path = require('path');
+
 var BugPackKey = require('./BugPackKey');
 var BugPackPackage = require('./BugPackPackage');
 var BugPackRegistry = require('./BugPackRegistry');
@@ -178,7 +180,7 @@ BugPackContext.prototype.requireExport = function(bugPackKeyString) {
                 var bugPackSource = this.registry.getBugPackSource(packageName, exportName);
                 if (!bugPackSource.hasLoaded()) {
                     bugPackSource.loadSync();
-                    exportObject = bugPackPackage.export(exportName);
+                    exportObject = bugPackPackage.require(exportName);
                 } else {
                     throw new Error("Source '" + bugPackSource.getSourceFilePath() + "' has already been loaded and " +
                         "export '" + exportName + "' is still not found in package '" + packageName + "'");
@@ -188,7 +190,7 @@ BugPackContext.prototype.requireExport = function(bugPackKeyString) {
                     "source has been registered for this export");
             }
         } else {
-            exportObject = bugPackPackage.export(exportName);
+            exportObject = bugPackPackage.require(exportName);
         }
 
         this.requireStack.pop();

@@ -45,7 +45,7 @@ BugPackSource.prototype.getSourceFilePath = function() {
 /**
  * @return {boolean}
  */
-BugPackSource.hasLoaded = function() {
+BugPackSource.prototype.hasLoaded = function() {
     return this.loaded;
 };
 
