@@ -34,10 +34,10 @@ var nodejs = enableModule("nodejs");
 buildProperties({
     bugpackNode : {
         packageJson: {
-            "name": "bugpack",
-            "version": "0.0.3",
-            "main": "./lib/BugPackApi.js",
-            "private": true
+            name: "bugpack",
+            version: "0.0.3",
+            main: "./lib/BugPackApi.js",
+            private: true
         },
         sourcePaths: [
             "./projects/bugpack-node/js/src"
@@ -45,10 +45,10 @@ buildProperties({
     },
     bugpackRegistry : {
         packageJson: {
-            "name": "bugpack-registry",
-            "version": "0.0.1",
-            "main": "./lib/BugPackRegistryBuilder.js",
-            "private": true
+            name: "bugpack-registry",
+            version: "0.0.1",
+            main: "./lib/BugPackRegistryBuilder.js",
+            private: true
         },
         sourcePaths: [
             "./projects/bugpack-registry/js/src"

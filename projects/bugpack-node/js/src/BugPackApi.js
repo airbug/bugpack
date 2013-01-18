@@ -76,7 +76,7 @@ BugPackApi.context = function(module) {
  * @return {string}
  */
 BugPackApi.findModuleTopDir = function(module) {
-    var moduleDir =  path.dirname(module.filename);
+    var moduleDir =  path.resolve(path.dirname(module.filename));
     var parts = moduleDir.split(path.sep);
     for (var size = parts.length, i = size - 1; i > 0; i--) {
         var dir = parts.slice(0, i + 1).join(path.sep);
