@@ -50,16 +50,16 @@ BugPackApi.setCurrentContext = function(context) {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {Module} module
+ * @param {(Module|string)} moduleOrPath
  * @return {BugPackContext}
  */
-BugPackApi.context = function(module) {
+BugPackApi.context = function(moduleOrPath) {
 
     // NOTE BRN: Only packs in THIS node module will be autoloaded. We should not try to find EVERY module and load
     // all the registries.
 
-    if (module) {
-        BugPackApi.currentContext = BugPackApi.generateContext(module);
+    if (moduleOrPath) {
+        BugPackApi.currentContext = BugPackApi.generateContext(moduleOrPath);
     }
 
     return BugPackApi.currentContext;
@@ -72,27 +72,31 @@ BugPackApi.context = function(module) {
 
 /**
  * @private
- * @param module
+ * @param {(Module|string)} moduleOrPath
  * @return {string}
  */
-BugPackApi.findModuleTopDir = function(module) {
-    var moduleDir =  path.resolve(path.dirname(module.filename));
-    var parts = moduleDir.split(path.sep);
+BugPackApi.findModuleTopDir = function(moduleOrPath) {
+    var startPath = moduleOrPath;
+    if (typeof moduleOrPath === "object") {
+        startPath = path.dirname(moduleOrPath.filename);
+    }
+    startPath = path.resolve(startPath);
+    var parts = startPath.split(path.sep);
     for (var size = parts.length, i = size - 1; i > 0; i--) {
         var dir = parts.slice(0, i + 1).join(path.sep);
         if (BugPackApi.isNodeModuleDirSync(dir)) {
             return dir;
         }
     }
-    return moduleDir;
+    return null;
 };
 
 /**
- * @param {Module} module
+ * @param {(Module|string)} moduleOrPath
  * @return {BugPackContext}
  */
-BugPackApi.generateContext = function(module) {
-    var moduleTopDir = BugPackApi.findModuleTopDir(module);
+BugPackApi.generateContext = function(moduleOrPath) {
+    var moduleTopDir = BugPackApi.findModuleTopDir(moduleOrPath);
     var context = BugPackApi.getContextForModuleTopDir(moduleTopDir);
     if (!context) {
         context = new BugPackContext(moduleTopDir, this);
