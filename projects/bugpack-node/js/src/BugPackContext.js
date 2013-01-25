@@ -18,6 +18,12 @@ var BugPackContext = function(moduleTopDir, bugPackApi) {
 
     /**
      * @private
+     * @type {boolean}
+     */
+    this.autoloaded = false;
+
+    /**
+     * @private
      * @type {BugPackApi}
      */
     this.bugPackApi = bugPackApi;
@@ -69,6 +75,30 @@ BugPackContext.prototype.getRegistry = function() {
 //-------------------------------------------------------------------------------
 // Public Methods
 //-------------------------------------------------------------------------------
+
+/**
+ *
+ */
+BugPackContext.prototype.autoload = function() {
+    var _this = this;
+    if (!this.autoloaded) {
+        this.autoloaded = true;
+        var registry = this.getRegistry();
+        var registryEntries = registry.getRegistryEntries();
+        registryEntries.forEach(function(registryEntry) {
+            var annotations = registryEntry.getAnnotations();
+            for (var i = 0, size = annotations.length; i < size; i++) {
+                var annotation = annotations[i];
+                if (annotation.name === "Autoload") {
+                    _this.bugPackApi.setCurrentContext(_this);
+                    var bugPackSource = registryEntry.getBugPackSource();
+                    bugPackSource.loadSync();
+                    break;
+                }
+            }
+        });
+    }
+};
 
 /**
  * @param {string} bugPackKeyString

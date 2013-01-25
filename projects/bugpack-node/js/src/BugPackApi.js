@@ -60,6 +60,7 @@ BugPackApi.context = function(moduleOrPath) {
 
     if (moduleOrPath) {
         BugPackApi.currentContext = BugPackApi.generateContext(moduleOrPath);
+        BugPackApi.currentContext.autoload();
     }
 
     return BugPackApi.currentContext;
