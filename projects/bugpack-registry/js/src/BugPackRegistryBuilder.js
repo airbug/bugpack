@@ -178,10 +178,6 @@ BugPackRegistryBuilder.prototype.generatePack = function(sourceFile, annotations
  * @private
  */
 BugPackRegistryBuilder.prototype.processSourceFiles = function() {
-    //TEST
-    console.log("this.sourceFiles:");
-    console.log(this.sourceFiles);
-
     var _this = this;
     if (this.sourceFiles.length > 0) {
         this.sourceFiles.forEach(function(sourceFile) {
