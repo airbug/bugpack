@@ -74,6 +74,16 @@ BugPackRegistryBuilder.prototype.build = function(callback) {
 
 /**
  * @private
+ */
+BugPackRegistryBuilder.prototype.checkComplete = function() {
+    if (this.numberComplete === this.sourceFiles.length) {
+        this.stopProcesses();
+        this.callback(null, this.registry);
+    }
+};
+
+/**
+ * @private
  * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
  * @return {Array.<string>}
  */
@@ -93,24 +103,29 @@ BugPackRegistryBuilder.prototype.findExports = function(annotations) {
 /**
  * @private
  * @param {Array.<{name: string, arguments: Array.<(string|number)>}>} annotations
+ * @param {string} sourceFile
  * @return {string}
  */
-BugPackRegistryBuilder.prototype.findPackage = function(annotations) {
+BugPackRegistryBuilder.prototype.findPackage = function(annotations, sourceFile) {
     var packageFound = false;
     var packageName = null;
     annotations.forEach(function(annotation) {
         var name = annotation.name;
-        var arguments = annotation.arguments;
+        var args = annotation.arguments;
         if (name === 'Package') {
-            packageName = arguments[0];
-            if (packageName) {
-                if (!packageFound) {
-                    packageFound = true;
+            if (args && args.length > 0) {
+                packageName = args[0];
+                if (packageName) {
+                    if (!packageFound) {
+                        packageFound = true;
+                    } else {
+                        throw new Error("Duplicate package declaration '" + packageName + "' in source file '" + sourceFile + "'");
+                    }
                 } else {
-                    throw new Error("Duplicate package declaration '" + packageName + "' in file.");
+                    throw new Error("Package name is required for package declaration in source file '" + sourceFile + "'");
                 }
             } else {
-                throw new Error("Package name is required for package declaration.");
+                throw new Error("Package name is required for package declaration in source file '" + sourceFile + "'");
             }
         }
     });
@@ -152,7 +167,7 @@ BugPackRegistryBuilder.prototype.generatePack = function(sourceFile, annotations
     var pack = {
         path: path.relative(this.absoluteSourceRoot, sourceFile),
         exports: this.findExports(annotations),
-        package: this.findPackage(annotations),
+        package: this.findPackage(annotations, sourceFile),
         requires: this.findRequires(annotations),
         annotations: annotations
     };
@@ -164,10 +179,30 @@ BugPackRegistryBuilder.prototype.generatePack = function(sourceFile, annotations
  */
 BugPackRegistryBuilder.prototype.processSourceFiles = function() {
     var _this = this;
-    this.sourceFiles.forEach(function(sourceFile) {
-        var registryBuilderProcess = _this.roundRobinNextProcess();
-        registryBuilderProcess.send({sourceFile: sourceFile});
-    });
+    if (this.sourceFiles.length > 0) {
+        this.sourceFiles.forEach(function(sourceFile) {
+            var registryBuilderProcess = _this.roundRobinNextProcess();
+            registryBuilderProcess.send({sourceFile: sourceFile});
+        });
+    } else {
+        console.log("Did not find any source files during bugpack registry build...");
+        this.checkComplete();
+    }
+};
+
+/**
+ * @private
+ * @param {string} symlinkPath
+ * @return {string}
+ */
+BugPackRegistryBuilder.prototype.resolveSymlink = function(symlinkPath) {
+    var symlinkedPathString = fs.readlinkSync(symlinkPath);
+    var stat = fs.lstatSync(symlinkedPathString);
+    if (stat.isSymbolicLink()) {
+        return this.resolveSymlink(symlinkedPathString);
+    } else {
+        return symlinkedPathString;
+    }
 };
 
 /**
@@ -189,7 +224,7 @@ BugPackRegistryBuilder.prototype.roundRobinNextProcess = function() {
  * @private
  * @param {string} directoryPathString
  * @param {boolean} scanRecursively (defaults to true)
- * @return {Array<string>}
+ * @return {Array.<string>}
  */
 BugPackRegistryBuilder.prototype.scanDirectoryForSourceFiles = function(directoryPathString, scanRecursively) {
     if (scanRecursively === undefined) {
@@ -199,17 +234,54 @@ BugPackRegistryBuilder.prototype.scanDirectoryForSourceFiles = function(director
     var fileStringArray = fs.readdirSync(directoryPathString);
     for (var i = 0, size = fileStringArray.length; i < size; i++) {
         var pathString = directoryPathString + "/" + fileStringArray[i];
-        var stat = fs.statSync(pathString);
-        if (stat.isDirectory()) {
-            if (scanRecursively) {
-                var childModulePathArray = this.scanDirectoryForSourceFiles(pathString);
-                sourcePathArray = sourcePathArray.concat(childModulePathArray);
-            }
-        } else if (stat.isFile()) {
-            if (pathString.lastIndexOf('.js') === pathString.length - 3) {
-                sourcePathArray.push(pathString);
-            }
+        sourcePathArray = sourcePathArray.concat(this.scanPathForSourceFiles(pathString, scanRecursively));
+    }
+    return sourcePathArray;
+};
+
+/**
+ * @private
+ * @param {string} pathString
+ * @param {boolean} scanRecursively
+ * @return {Array.<string>}
+ */
+BugPackRegistryBuilder.prototype.scanPathForSourceFiles = function(pathString, scanRecursively) {
+    var sourcePathArray = [];
+    var stat = fs.lstatSync(pathString);
+    if (stat.isDirectory()) {
+        if (scanRecursively) {
+            var childModulePathArray = this.scanDirectoryForSourceFiles(pathString);
+            sourcePathArray = sourcePathArray.concat(childModulePathArray);
         }
+    } else if (stat.isFile()) {
+        if (pathString.lastIndexOf('.js') === pathString.length - 3) {
+            sourcePathArray.push(pathString);
+        }
+    } else if (stat.isSymbolicLink()) {
+        sourcePathArray = sourcePathArray.concat(this.scanSymlinkForSourceFiles(pathString, scanRecursively));
+    }
+    return sourcePathArray;
+};
+
+BugPackRegistryBuilder.prototype.scanSymlinkForSourceFiles = function(symlinkPathString, scanRecursively) {
+    var sourcePathArray = [];
+    var resolvedPath = this.resolveSymlink(symlinkPathString);
+    var stat = fs.lstatSync(resolvedPath);
+    if (stat.isDirectory()) {
+        if (scanRecursively) {
+            var childModulePathArray = this.scanDirectoryForSourceFiles(resolvedPath);
+            for (var i = 0, size = childModulePathArray.length; i < size; i++) {
+                var childModulePath = childModulePathArray[i];
+                childModulePathArray[i] = childModulePath.replace(resolvedPath, symlinkPathString);
+            }
+            sourcePathArray = sourcePathArray.concat(childModulePathArray);
+        }
+    } else if (stat.isFile()) {
+        if (resolvedPath.lastIndexOf('.js') === resolvedPath.length - 3) {
+            sourcePathArray.push(symlinkPathString);
+        }
+    } else {
+        throw new Error("Resolved Path '" + resolvedPath + "' is an unknown type.");
     }
     return sourcePathArray;
 };
@@ -257,9 +329,8 @@ BugPackRegistryBuilder.prototype.handleChildMessage = function(message) {
 
     if (error) {
         this.callback(error, null);
-    } else if (this.numberComplete === this.sourceFiles.length) {
-        this.stopProcesses();
-        this.callback(null, this.registry);
+    } else {
+        this.checkComplete();
     }
 };
 
