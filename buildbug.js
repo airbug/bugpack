@@ -35,7 +35,7 @@ buildProperties({
     bugpackNode : {
         packageJson: {
             name: "bugpack",
-            version: "0.0.3",
+            version: "0.0.4",
             main: "./lib/BugPackApi.js",
             private: true
         },
@@ -46,7 +46,7 @@ buildProperties({
     bugpackRegistry : {
         packageJson: {
             name: "bugpack-registry",
-            version: "0.0.2",
+            version: "0.0.3",
             main: "./lib/BugPackRegistryBuilder.js",
             private: true
         },
@@ -112,7 +112,7 @@ buildTarget("local").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                ACL: 'public-read'
+                                acl: 'public-read'
                             }
                         });
                     },
@@ -146,7 +146,7 @@ buildTarget("local").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                ACL: 'public-read'
+                                acl: 'public-read'
                             }
                         });
                     },
@@ -197,7 +197,7 @@ buildTarget("prod").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                ACL: 'public-read'
+                                acl: 'public-read'
                             }
                         });
                     },
@@ -231,7 +231,7 @@ buildTarget("prod").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                ACL: 'public-read'
+                                acl: 'public-read'
                             }
                         });
                     },
