@@ -20,7 +20,7 @@ var BugPackContext = function(contextUrl, bugPackApi) {
      * @private
      * @type {boolean}
      */
-    this.generated = false;
+    //this.generated = false;
 
     /**
      * @private
@@ -103,9 +103,10 @@ BugPackContext.prototype.generateBugPackKey = function(bugPackKeyString) {
  * @private
  */
 BugPackContext.prototype.generateRegistry = function() {
-    var registryJson = this.loadRegistryJson();
+    //var registryJson = this.loadRegistryJson();
     this.registry = new BugPackRegistry();
     //this.registry.generate(registryJson);
+    this.registry.generate();
 };
 
 /**
@@ -156,7 +157,8 @@ BugPackContext.prototype.requireExport = function(bugPackKeyString) {
         this.requireStack.push(key);
         this.bugPackApi.setCurrentContext(this);
         if (!bugPackPackage.hasExport(exportName)) {
-            if (this.registry.hasEntryForExport(packageName, exportName)) {
+            //TODO BRN: Temporary hack removing this code
+            /*if (this.registry.hasEntryForExport(packageName, exportName)) {
                 var registryEntry = this.registry.getEntryByPackageAndExport(packageName, exportName);
                 var bugPackSource = registryEntry.getBugPackSource();
                 if (!bugPackSource.hasLoaded()) {
@@ -169,7 +171,9 @@ BugPackContext.prototype.requireExport = function(bugPackKeyString) {
             } else {
                 throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
                     "source has been registered for this export");
-            }
+            }*/
+            throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
+                "source has been registered for this export");
         } else {
             exportObject = bugPackPackage.require(exportName);
         }
