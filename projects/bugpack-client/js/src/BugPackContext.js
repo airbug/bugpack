@@ -20,7 +20,7 @@ var BugPackContext = function(contextUrl, bugPackApi) {
      * @private
      * @type {boolean}
      */
-    //this.generated = false;
+    this.generated = false;
 
     /**
      * @private

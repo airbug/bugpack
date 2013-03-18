@@ -101,10 +101,8 @@ BugPackRegistry.prototype.getPackage = function(packageName) {
  *
  */
 BugPackRegistry.prototype.generate = function() {
-    var _this = this;
     this.createPackage(".");
 };
-
 
 /**
  * @param {string} packageName
@@ -167,6 +165,7 @@ BugPackRegistry.prototype.registerExport = function(packageName, exportName, bug
         throw new Error("Cannot register an export to a package that does not exist.'" + packageName + "'");
     }*/
 
+    //TODO BRN: This is a temporary hack until we implement the registry stuff for client code
     if (!this.hasPackage(packageName)) {
         this.createPackage(packageName);
     }
