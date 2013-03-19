@@ -45,6 +45,8 @@ BugPackApi.setCurrentContext = function(context) {
 BugPackApi.context = function(contextUrl) {
     if (contextUrl) {
         BugPackApi.currentContext = BugPackApi.generateContext(contextUrl);
+    } if (!BugPackApi.currentContext) {
+        BugPackApi.currentContext = BugPackApi.generateContext("*");
     }
 
     return BugPackApi.currentContext;
