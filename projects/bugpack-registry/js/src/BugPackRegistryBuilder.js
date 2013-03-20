@@ -12,13 +12,19 @@ var path = require('path');
 // Declare Class
 //-------------------------------------------------------------------------------
 
-var BugPackRegistryBuilder = function(absoluteSourceRoot) {
+var BugPackRegistryBuilder = function(absoluteSourceRoot, ignore) {
 
     /**
      * @private
      * @type {string}
      */
     this.absoluteSourceRoot = absoluteSourceRoot;
+
+    /**
+     * @private
+     * @type {Array.<string>}
+     */
+    this.ignore = ignore || [];
 
     /**
      * @private
@@ -232,9 +238,15 @@ BugPackRegistryBuilder.prototype.scanDirectoryForSourceFiles = function(director
     }
     var sourcePathArray = [];
     var fileStringArray = fs.readdirSync(directoryPathString);
+    var ignorePaths = [];
+    this.ignore.forEach(function(ignorePathString) {
+        ignorePaths.push(path.resolve(directoryPathString, ignorePathString));
+    });
     for (var i = 0, size = fileStringArray.length; i < size; i++) {
-        var pathString = directoryPathString + "/" + fileStringArray[i];
-        sourcePathArray = sourcePathArray.concat(this.scanPathForSourceFiles(pathString, scanRecursively));
+        var pathString = path.resolve(directoryPathString + "/" + fileStringArray[i]);
+        if (ignorePaths.indexOf(pathString) === -1) {
+            sourcePathArray = sourcePathArray.concat(this.scanPathForSourceFiles(pathString, scanRecursively));
+        }
     }
     return sourcePathArray;
 };
@@ -341,10 +353,11 @@ BugPackRegistryBuilder.prototype.handleChildMessage = function(message) {
 
 /**
  * @param {string} sourceRoot
+ * @param {Array.<string>}
  * @param {function()} callback
  */
-BugPackRegistryBuilder.buildRegistry = function(sourceRoot, callback) {
-    var registryBuilder = new BugPackRegistryBuilder(sourceRoot);
+BugPackRegistryBuilder.buildRegistry = function(sourceRoot, ignore, callback) {
+    var registryBuilder = new BugPackRegistryBuilder(sourceRoot, ignore);
     registryBuilder.build(callback);
 };
 
