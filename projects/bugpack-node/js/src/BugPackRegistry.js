@@ -157,7 +157,7 @@ BugPackRegistry.prototype.getEntryByPackageAndExport = function(packageName, exp
  */
 BugPackRegistry.prototype.getEntryBySourceFilePath = function(sourceFilePath) {
     if (this.hasEntryForSourceFilePath(sourceFilePath)) {
-        return this.registryKeyToRegistryEntryMap[sourceFilePath];
+        return this.sourceFilePathToRegistryEntryMap[sourceFilePath];
     }
     return null;
 };

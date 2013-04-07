@@ -72,7 +72,7 @@ RegistryBuilderChild.prototype.processSourceFile = function(sourceFile) {
         var annotations = [];
         var lines = data.split('\n');
         lines.forEach(function(line) {
-            var results = line.match(/\s*\/\/@([a-zA-Z][0-9a-zA-Z]*)(?:\((.+)?\))?\s*/);
+            var results = line.match(/\s*\/\/\s*@([a-zA-Z][0-9a-zA-Z]*)(?:\((.+)?\))?\s*/);
             if (results) {
                 var annotation = {
                     name: results[1]
