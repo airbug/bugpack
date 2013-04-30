@@ -134,6 +134,12 @@ BugPackContext.prototype.autoload = function(callback) {
  * @param {*} bugPackExport
  */
 BugPackContext.prototype.export = function(bugPackKeyString, bugPackExport) {
+    if (!bugPackKeyString) {
+        throw new Error("Expected string for 'bugPackKeyString' instead found ", bugPackKeyString);
+    }
+    if (!bugPackExport) {
+        throw new Error("Expected object or function for 'bugPackExport' instead found ", bugPackExport);
+    }
     var bugPackKey = this.generateBugPackKey(bugPackKeyString);
     this.registerExport(bugPackKey.getPackageName(), bugPackKey.getExportName(), bugPackExport);
 };
