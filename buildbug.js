@@ -35,7 +35,7 @@ buildProperties({
     bugpackNode : {
         packageJson: {
             name: "bugpack",
-            version: "0.0.4",
+            version: "0.0.5",
             main: "./lib/BugPackApi.js",
             private: true
         },
@@ -46,7 +46,7 @@ buildProperties({
     bugpackRegistry : {
         packageJson: {
             name: "bugpack-registry",
-            version: "0.0.4",
+            version: "0.0.5",
             main: "./lib/BugPackRegistryBuilder.js",
             private: true
         },
