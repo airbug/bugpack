@@ -2,12 +2,14 @@
 // Requires
 //-------------------------------------------------------------------------------
 
+var fs = require('fs');
 var path = require('path');
 
 var BugPackKey = require('./BugPackKey');
 var BugPackPackage = require('./BugPackPackage');
 var BugPackRegistry = require('./BugPackRegistry');
-var NodeBugPackScanner = require('./NodeBugPackScanner');
+var BugPackRegistryFile = require('./BugPackRegistryFile');
+var PathUtil = require('./PathUtil');
 
 
 //-------------------------------------------------------------------------------
@@ -105,6 +107,12 @@ BugPackContext.prototype.autoload = function() {
  * @param {*} bugPackExport
  */
 BugPackContext.prototype.export = function(bugPackKeyString, bugPackExport) {
+    if (!bugPackKeyString) {
+        throw new Error("Expected string for 'bugPackKeyString' instead found ", bugPackKeyString);
+    }
+    if (!bugPackExport) {
+        throw new Error("Expected object or function for 'bugPackExport' instead found ", bugPackExport);
+    }
     var bugPackKey = this.generateBugPackKey(bugPackKeyString);
     this.registerExport(bugPackKey.getPackageName(), bugPackKey.getExportName(), bugPackExport);
 };
@@ -145,10 +153,15 @@ BugPackContext.prototype.generateBugPackKey = function(bugPackKeyString) {
  * @private
  */
 BugPackContext.prototype.generateRegistry = function() {
-    var scanner = new NodeBugPackScanner(this.moduleTopDir);
-    var registryFiles = scanner.scanForRegistryFiles();
-    this.registry = new BugPackRegistry();
-    this.registry.generate(registryFiles);
+    var bugpackRegistryPath = path.resolve(this.moduleTopDir, "bugpack-registry.json");
+    if (PathUtil.isFileSync(bugpackRegistryPath)) {
+        var registryFiles = [];
+        registryFiles.push(new BugPackRegistryFile(bugpackRegistryPath));
+        this.registry = new BugPackRegistry();
+        this.registry.generate(registryFiles);
+    } else {
+        throw new Error("Cannot find bugpack-registry.json file");
+    }
 };
 
 /**

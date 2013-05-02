@@ -1,14 +1,4 @@
 //-------------------------------------------------------------------------------
-// Requires
-//-------------------------------------------------------------------------------
-
-var path = require('path');
-
-var BugPackSource = require('./BugPackSource');
-var PathUtil = require('./PathUtil');
-
-
-//-------------------------------------------------------------------------------
 // Declare Class
 //-------------------------------------------------------------------------------
 
@@ -31,7 +21,7 @@ var BugPackRegistryEntry = function(registryPath, registryEntryJson) {
      * @private
      * @type {string}
      */
-    this.sourceFilePath = path.join(registryPath, this.path);
+    this.sourceFilePath = registryPath + "/" + this.path;
 
     /**
      * @private
@@ -56,6 +46,12 @@ var BugPackRegistryEntry = function(registryPath, registryEntryJson) {
      * @type {Array.<string>}
      */
     this.annotations = registryEntryJson.annotations || [];
+
+    /**
+     * @private
+     * @type {Array.<string>}
+     */
+    this.requires = registryEntryJson.requires || [];
 };
 
 
@@ -105,6 +101,13 @@ BugPackRegistryEntry.prototype.getAnnotations = function() {
     return this.annotations;
 };
 
+/**
+ * @return {Array.<string>}
+ */
+BugPackRegistryEntry.prototype.getRequires = function() {
+    return this.requires;
+};
+
 
 //-------------------------------------------------------------------------------
 // Public Methods
@@ -123,9 +126,3 @@ BugPackRegistryEntry.prototype.validate = function(registryEntryJson) {
     //TODO BRN: Validate the export names using regex
 };
 
-
-//-------------------------------------------------------------------------------
-// Exports
-//-------------------------------------------------------------------------------
-
-module.exports = BugPackRegistryEntry;
