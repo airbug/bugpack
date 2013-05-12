@@ -69,21 +69,26 @@ RegistryBuilderChild.prototype.processSourceFile = function(sourceFile) {
         if (error) {
             throw new Error(error);
         }
-        var annotations = [];
-        var lines = data.split('\n');
-        lines.forEach(function(line) {
-            var results = line.match(/\s*\/\/\s*@([a-zA-Z][0-9a-zA-Z]*)(?:\((.+)?\))?\s*/);
-            if (results) {
-                var annotation = {
-                    name: results[1]
-                };
-                var argumentsString = results[2];
-                if (argumentsString !== undefined) {
-                    annotation.arguments = _this.parseArguments(argumentsString);
+        try {
+            var annotations = [];
+            var lines = data.split('\n');
+            lines.forEach(function(line) {
+                var results = line.match(/\s*\/\/\s*@([a-zA-Z][0-9a-zA-Z]*)(?:\((.+)?\))?\s*/);
+                if (results) {
+                    var annotation = {
+                        name: results[1]
+                    };
+                    var argumentsString = results[2];
+                    if (argumentsString !== undefined) {
+                        annotation.arguments = _this.parseArguments(argumentsString);
+                    }
+                    annotations.push(annotation);
                 }
-                annotations.push(annotation);
-            }
-        });
+            });
+        } catch(error) {
+            error.message += " while processing file '" + sourceFile + "'";
+            throw error;
+        }
         process.send({
             sourceFile: sourceFile,
             annotations: annotations
