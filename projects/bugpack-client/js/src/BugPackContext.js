@@ -212,14 +212,19 @@ BugPackContext.prototype.hasProcessedSource = function(bugPackSource) {
 BugPackContext.prototype.loadExport = function(bugPackKeyString, callback) {
     var bugPackKey = this.generateBugPackKey(bugPackKeyString);
     var registryEntry = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
-    var bugPackSource = registryEntry.getBugPackSource();
-    if (this.loadStack.indexOf(bugPackKeyString) !== -1) {
-        throw new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
-            "load stack. " + JSON.stringify(this.loadStack));
+    if (registryEntry) {
+        var bugPackSource = registryEntry.getBugPackSource();
+        if (this.loadStack.indexOf(bugPackKeyString) !== -1) {
+            callback(new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
+                "load stack. " + JSON.stringify(this.loadStack)));
+        } else {
+            this.loadStack.push(bugPackKeyString);
+            this.loadSource(bugPackSource, callback);
+            this.loadStack.pop();
+        }
+    } else {
+        callback(new Error("Cannot find registry entry '" + bugPackKeyString + "'"));
     }
-    this.loadStack.push(bugPackKeyString);
-    this.loadSource(bugPackSource, callback);
-    this.loadStack.pop();
 };
 
 /**
@@ -273,13 +278,17 @@ BugPackContext.prototype.processSource = function(bugPackSource, callback) {
     if (requiredExports.length > 0) {
         var loadedExportsCount = 0;
         requiredExports.forEach(function(requiredExport) {
-            _this.loadExport(requiredExport, function() {
-                loadedExportsCount++;
-                if (loadedExportsCount === requiredExports.length) {
-                    //TODO BRN: This doesn't quite work since this requires sync code. Instead we need to use a key on the start of load and on th execution of context
-                    _this.bugPackApi.setCurrentContext(_this);
-                    bugPackSource.addLoadCallback(callback);
-                    bugPackSource.load();
+            _this.loadExport(requiredExport, function(error) {
+                if (!error) {
+                    loadedExportsCount++;
+                    if (loadedExportsCount === requiredExports.length) {
+                        //TODO BRN: This doesn't quite work since this requires sync code. Instead we need to use a key on the start of load and on th execution of context
+                        _this.bugPackApi.setCurrentContext(_this);
+                        bugPackSource.addLoadCallback(callback);
+                        bugPackSource.load();
+                    }
+                } else {
+                    callback(error);
                 }
             });
         });
