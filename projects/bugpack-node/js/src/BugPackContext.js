@@ -128,6 +128,14 @@ BugPackContext.prototype.generate = function() {
 };
 
 /**
+ * @param {string} packageName
+ * @return {BugPackPackage}
+ */
+BugPackContext.prototype.getPackage = function(packageName) {
+    return this.registry.getPackage(packageName);
+};
+
+/**
  * @param {string} bugPackKeyString
  * @return {*}
  */

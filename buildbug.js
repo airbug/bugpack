@@ -2,29 +2,30 @@
 // Requires
 //-------------------------------------------------------------------------------
 
-var buildbug = require("buildbug");
+var buildbug        = require("buildbug");
 
 
 //-------------------------------------------------------------------------------
 // Simplify References
 //-------------------------------------------------------------------------------
 
-var buildProject = buildbug.buildProject;
+var buildProject    = buildbug.buildProject;
 var buildProperties = buildbug.buildProperties;
-var buildTarget = buildbug.buildTarget;
-var enableModule = buildbug.enableModule;
-var parallel = buildbug.parallel;
-var series = buildbug.series;
-var targetTask = buildbug.targetTask;
+var buildTarget     = buildbug.buildTarget;
+var enableModule    = buildbug.enableModule;
+var parallel        = buildbug.parallel;
+var series          = buildbug.series;
+var targetTask      = buildbug.targetTask;
 
 
 //-------------------------------------------------------------------------------
 // Enable Modules
 //-------------------------------------------------------------------------------
 
-var aws = enableModule("aws");
-var core = enableModule("core");
-var nodejs = enableModule("nodejs");
+var aws             = enableModule("aws");
+var core            = enableModule("core");
+var nodejs          = enableModule("nodejs");
+var uglifyjs        = enableModule("uglifyjs");
 
 
 //-------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ var nodejs = enableModule("nodejs");
 //-------------------------------------------------------------------------------
 
 buildProperties({
-    bugpackNode : {
+    bugpackNode: {
         packageJson: {
             name: "bugpack",
             version: "0.0.5",
@@ -43,7 +44,7 @@ buildProperties({
             "./projects/bugpack-node/js/src"
         ]
     },
-    bugpackRegistry : {
+    bugpackRegistry: {
         packageJson: {
             name: "bugpack-registry",
             version: "0.0.5",
@@ -53,6 +54,22 @@ buildProperties({
         sourcePaths: [
             "./projects/bugpack-registry/js/src"
         ]
+    },
+    bugpackWeb: {
+        name: "bugpack",
+        version: "0.0.1",
+        sourcePaths: [
+            "./projects/bugpack-client/js/src/BugPackKey.js",
+            "./projects/bugpack-client/js/src/BugPackPackage.js",
+            "./projects/bugpack-client/js/src/BugPackSource.js",
+            "./projects/bugpack-client/js/src/BugPackRegistryEntry.js",
+            "./projects/bugpack-client/js/src/BugPackRegistry.js",
+            "./projects/bugpack-client/js/src/BugPackRegistryFile.js",
+            "./projects/bugpack-client/js/src/BugPackContext.js",
+            "./projects/bugpack-client/js/src/BugPackApi.js"
+        ],
+        outputFile: "{{distPath}}/{{bugpackWeb.name}}-{{bugpackWeb.version}}.js",
+        outputMinFile: "{{distPath}}/{{bugpackWeb.name}}-{{bugpackWeb.version}}.min.js"
     }
 });
 
@@ -86,6 +103,11 @@ buildTarget("local").buildFlow(
         // old source files are removed. We should figure out a better way of doing that.
 
         targetTask("clean"),
+        targetTask("s3EnsureBucket", {
+            properties: {
+                bucket: "{{local-bucket}}"
+            }
+        }),
         parallel([
             series([
                 targetTask("createNodePackage", {
@@ -96,13 +118,8 @@ buildTarget("local").buildFlow(
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: buildProject.getProperty("bugpackNode.packageJson.name"),
-                        packageVersion: buildProject.getProperty("bugpackNode.packageJson.version")
-                    }
-                }),
-                targetTask("s3EnsureBucket", {
-                    properties: {
-                        bucket: buildProject.getProperty("local-bucket")
+                        packageName: "{{bugpackNode.packageJson.name}}",
+                        packageVersion: "{{bugpackNode.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -130,13 +147,8 @@ buildTarget("local").buildFlow(
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: buildProject.getProperty("bugpackRegistry.packageJson.name"),
-                        packageVersion: buildProject.getProperty("bugpackRegistry.packageJson.version")
-                    }
-                }),
-                targetTask("s3EnsureBucket", {
-                    properties: {
-                        bucket: buildProject.getProperty("local-bucket")
+                        packageName: "{{bugpackRegistry.packageJson.name}}",
+                        packageVersion: "{{bugpackRegistry.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -151,9 +163,47 @@ buildTarget("local").buildFlow(
                         });
                     },
                     properties: {
-                        bucket: buildProject.getProperty("local-bucket")
+                        bucket: "{{local-bucket}}"
                     }
                 })
+            ]),
+            series([
+                targetTask("concat", {
+                    properties: {
+                        sources: buildProject.getProperty("bugpackWeb.sourcePaths"),
+                        outputFile: "{{bugpackWeb.outputFile}}"
+                    }
+                }),
+                parallel([
+                    targetTask("s3PutFile", {
+                        properties: {
+                            file:  "{{bugpackWeb.outputFile}}",
+                            options: {
+                                acl: 'public-read',
+                                gzip: true
+                            },
+                            bucket: "{{local-bucket}}"
+                        }
+                    }),
+                    series([
+                        targetTask("uglifyjsMinify", {
+                            properties: {
+                                sources: ["{{bugpackWeb.outputFile}}"],
+                                outputFile: "{{bugpackWeb.outputMinFile}}"
+                            }
+                        }),
+                        targetTask("s3PutFile", {
+                            properties: {
+                                file:  "{{bugpackWeb.outputMinFile}}",
+                                options: {
+                                    acl: 'public-read',
+                                    gzip: true
+                                },
+                                bucket: "{{local-bucket}}"
+                            }
+                        })
+                    ])
+                ])
             ])
         ])
     ])
@@ -171,6 +221,11 @@ buildTarget("prod").buildFlow(
         // old source files are removed. We should figure out a better way of doing that.
 
         targetTask("clean"),
+        targetTask("s3EnsureBucket", {
+            properties: {
+                bucket: "airbug"
+            }
+        }),
         parallel([
             series([
                 targetTask("createNodePackage", {
@@ -181,13 +236,8 @@ buildTarget("prod").buildFlow(
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: buildProject.getProperty("bugpackNode.packageJson.name"),
-                        packageVersion: buildProject.getProperty("bugpackNode.packageJson.version")
-                    }
-                }),
-                targetTask("s3EnsureBucket", {
-                    properties: {
-                        bucket: "airbug"
+                        packageName: "{{bugpackNode.packageJson.name}}",
+                        packageVersion: "{{bugpackNode.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -215,13 +265,8 @@ buildTarget("prod").buildFlow(
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: buildProject.getProperty("bugpackRegistry.packageJson.name"),
-                        packageVersion: buildProject.getProperty("bugpackRegistry.packageJson.version")
-                    }
-                }),
-                targetTask("s3EnsureBucket", {
-                    properties: {
-                        bucket: "airbug"
+                        packageName: "{{bugpackRegistry.packageJson.name}}",
+                        packageVersion: "{{bugpackRegistry.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -239,6 +284,44 @@ buildTarget("prod").buildFlow(
                         bucket: "airbug"
                     }
                 })
+            ]),
+            series([
+                targetTask("concat", {
+                    properties: {
+                        sources: buildProject.getProperty("bugpackWeb.sourcePaths"),
+                        outputFile: "{{bugpackWeb.outputFile}}"
+                    }
+                }),
+                parallel([
+                    targetTask("s3PutFile", {
+                        properties: {
+                            file:  "{{bugpackWeb.outputFile}}",
+                            options: {
+                                acl: 'public-read',
+                                gzip: true
+                            },
+                            bucket: "airbug"
+                        }
+                    }),
+                    series([
+                        targetTask("uglifyjsMinify", {
+                            properties: {
+                                sources: ["{{bugpackWeb.outputFile}}"],
+                                outputFile: "{{bugpackWeb.outputMinFile}}"
+                            }
+                        }),
+                        targetTask("s3PutFile", {
+                            properties: {
+                                file:  "{{bugpackWeb.outputMinFile}}",
+                                options: {
+                                    acl: 'public-read',
+                                    gzip: true
+                                },
+                                bucket: "airbug"
+                            }
+                        })
+                    ])
+                ])
             ])
         ])
     ])
