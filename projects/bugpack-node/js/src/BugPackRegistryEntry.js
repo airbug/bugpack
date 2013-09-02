@@ -17,51 +17,58 @@ var BugPackRegistryEntry = function(registryPath, registryEntryJson) {
 
     /**
      * @private
-     * @type {string}
+     * @type {boolean}
      */
-    this.path = registryEntryJson.path;
+    this.autoload           = registryEntryJson.autoload;
 
     /**
      * @private
      * @type {string}
      */
-    this.registryPath = registryPath;
+    this.path               = registryEntryJson.path;
 
     /**
      * @private
      * @type {string}
      */
-    this.sourceFilePath = path.join(registryPath, this.path);
+    this.registryPath       = registryPath;
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.sourceFilePath     = path.join(registryPath, this.path);
 
     /**
      * @private
      * @type {BugPackSource}
      */
-    this.bugPackSource = new BugPackSource(this.sourceFilePath);
-
-    /**
-     * @private
-     * @type {string}
-     */
-    this.packageName = registryEntryJson.package || ".";
+    this.bugPackSource      = new BugPackSource(this.sourceFilePath);
 
     /**
      * @private
      * @type {Array.<string>}
      */
-    this.exportNames = registryEntryJson.exports || [];
+    this.exports            = registryEntryJson.exports || [];
 
     /**
      * @private
      * @type {Array.<string>}
      */
-    this.annotations = registryEntryJson.annotations || [];
+    this.requires           = registryEntryJson.requires || [];
 };
 
 
 //-------------------------------------------------------------------------------
 // Getters and Setters
 //-------------------------------------------------------------------------------
+
+/**
+ * @return {boolean}
+ */
+BugPackRegistryEntry.prototype.getAutoload = function() {
+    return this.autoload;
+};
 
 /**
  * @return {string}
@@ -85,24 +92,17 @@ BugPackRegistryEntry.prototype.getSourceFilePath = function() {
 };
 
 /**
- * @return {string}
+ * @return {Array.<string>}
  */
-BugPackRegistryEntry.prototype.getPackageName = function() {
-    return this.packageName;
+BugPackRegistryEntry.prototype.getExports = function() {
+    return this.exports;
 };
 
 /**
  * @return {Array.<string>}
  */
-BugPackRegistryEntry.prototype.getExportNames = function() {
-    return this.exportNames;
-};
-
-/**
- * @return {Array.<string>}
- */
-BugPackRegistryEntry.prototype.getAnnotations = function() {
-    return this.annotations;
+BugPackRegistryEntry.prototype.getRequires = function() {
+    return this.requires;
 };
 
 

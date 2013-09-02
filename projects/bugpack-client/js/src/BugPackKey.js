@@ -55,3 +55,11 @@ BugPackKey.prototype.getExportName = function() {
 BugPackKey.prototype.getPackageName = function() {
     return this.packageName;
 };
+
+/**
+ * @return {boolean}
+ */
+BugPackKey.prototype.isWildCard = function() {
+    return (this.exportName === "*");
+};
+

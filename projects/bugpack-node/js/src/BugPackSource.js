@@ -18,6 +18,19 @@ var BugPackSource = function(sourceFilePath) {
      */
     this.loaded = false;
 
+
+    /**
+     * @private
+     * @type {Array}
+     */
+    this.loadCallbacks = [];
+
+    /**
+     * @private
+     * @type {boolean}
+     */
+    this.loadStarted = false;
+
     /**
      * @private
      * @type {string}
@@ -43,10 +56,24 @@ BugPackSource.prototype.getSourceFilePath = function() {
 //-------------------------------------------------------------------------------
 
 /**
+ * @param {function(event)}
+    */
+BugPackSource.prototype.addLoadCallback = function(callback) {
+    this.loadCallbacks.push(callback);
+};
+
+/**
  * @return {boolean}
  */
 BugPackSource.prototype.hasLoaded = function() {
     return this.loaded;
+};
+
+/**
+ * @return {boolean}
+ */
+BugPackSource.prototype.hasLoadStarted = function() {
+    return this.loadStarted;
 };
 
 /**
@@ -66,9 +93,27 @@ BugPackSource.prototype.loadSync = function() {
 
 /**
  * @private
+ * @param {Error) error
+ */
+BugPackSource.prototype.loadComplete = function(error) {
+    this.loaded = true;
+    this.loadCallbacks.forEach(function(loadCallback) {
+        loadCallback(error);
+    });
+    this.loadCallbacks = [];
+};
+
+/**
+ * @private
  */
 BugPackSource.prototype.loadSource = function() {
-    require(this.sourceFilePath);
+    var error = undefined;
+    try {
+        require(this.sourceFilePath);
+    } catch(e) {
+        error = e;
+    }
+    this.loadComplete(error);
 };
 
 

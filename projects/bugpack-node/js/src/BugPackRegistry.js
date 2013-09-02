@@ -2,9 +2,9 @@
 // Requires
 //-------------------------------------------------------------------------------
 
-var BugPackPackage = require('./BugPackPackage');
-var BugPackRegistryEntry = require('./BugPackRegistryEntry');
-var BugPackSource = require('./BugPackSource');
+var BugPackKey              = require('./BugPackKey');
+var BugPackRegistryEntry    = require('./BugPackRegistryEntry');
+var BugPackSource           = require('./BugPackSource');
 
 
 //-------------------------------------------------------------------------------
@@ -12,12 +12,6 @@ var BugPackSource = require('./BugPackSource');
 //-------------------------------------------------------------------------------
 
 var BugPackRegistry = function() {
-
-    /**
-     * @private
-     * @type {Object}
-     */
-    this.packages = {};
 
     /**
      * @private
@@ -56,68 +50,36 @@ BugPackRegistry.prototype.getRegistryEntries = function() {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {string} packageName
- */
-BugPackRegistry.prototype.createPackage = function(packageName) {
-    var bugPackPackage = new BugPackPackage(packageName);
-    this.packages[bugPackPackage.getName()] = bugPackPackage;
-};
-
-/**
- * @param {string} packageName
- * @return {BugPackPackage}
- */
-BugPackRegistry.prototype.getPackage = function(packageName) {
-    if (this.hasPackage(packageName)) {
-        return this.packages[packageName];
-    }
-    return null;
-};
-
-/**
  * @param {Array.<BugPackRegistryFile>} registryFiles
  */
 BugPackRegistry.prototype.generate = function(registryFiles) {
     var _this = this;
-    this.createPackage(".");
     registryFiles.forEach(function(registryFile) {
         var registryEntryJsons = registryFile.loadRegistryContents();
         var registryPath = registryFile.getRegistryPath();
         for (var key in registryEntryJsons) {
             var registryEntry = new BugPackRegistryEntry(registryPath, registryEntryJsons[key]);
-            _this.registryEntries.push(registryEntry);
-
-            var packageName = registryEntry.getPackageName();
-            var exportNames = registryEntry.getExportNames();
+            var exports = registryEntry.getExports();
             var sourceFilePath = registryEntry.getSourceFilePath();
-
-            if (!_this.hasPackage(packageName)) {
-                _this.createPackage(packageName);
-            }
-
-            // NOTE BRN: export names are not required for exports. This can be useful when annotating files that are
-            // loaded more like scripts.
-
-            if (exportNames) {
-                exportNames.forEach(function(exportName) {
-                    _this.mapExportName(packageName, exportName, registryEntry);
-                });
-            }
 
             if (_this.hasEntryForSourceFilePath(sourceFilePath)) {
                 throw new Error("The source file path '" + sourceFilePath + "' has already been registered");
             }
+
+            _this.registryEntries.push(registryEntry);
             _this.sourceFilePathToRegistryEntryMap[sourceFilePath] = registryEntry;
+
+            // NOTE BRN: export names are not required for exports. This can be useful when annotating files that are
+            // loaded more like scripts.
+
+            if (exports) {
+                exports.forEach(function(exportKey) {
+                    var bugPackKey = this.generateBugPackKey(exportKey);
+                    _this.mapExportName(bugPackKey.getPackageName(), bugPackKey.getExportName(), registryEntry);
+                });
+            }
         }
     });
-};
-
-/**
- * @param {string} packageName
- * @return {boolean}
- */
-BugPackRegistry.prototype.hasPackage = function(packageName) {
-    return Object.prototype.hasOwnProperty.call(this.packages, packageName);
 };
 
 /**
@@ -162,23 +124,19 @@ BugPackRegistry.prototype.getEntryBySourceFilePath = function(sourceFilePath) {
     return null;
 };
 
-/**
- * @param {string} packageName
- * @param {string} exportName
- * @param {*} bugPackExport
- */
-BugPackRegistry.prototype.registerExport = function(packageName, exportName, bugPackExport) {
-    var bugPackPackage = this.getPackage(packageName);
-    if (!bugPackPackage) {
-        throw new Error("Cannot register an export to a package that does not exist.'" + packageName + "'");
-    }
-    bugPackPackage.export(exportName, bugPackExport);
-};
-
 
 //-------------------------------------------------------------------------------
 // Private Methods
 //-------------------------------------------------------------------------------
+
+/**
+ * @private
+ * @param {string} bugPackKeyString
+ * @return {BugPackKey}
+ */
+BugPackRegistry.prototype.generateBugPackKey = function(bugPackKeyString) {
+    return new BugPackKey(bugPackKeyString);
+};
 
 /**
  * @param {string} packageName

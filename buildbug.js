@@ -23,8 +23,10 @@ var targetTask      = buildbug.targetTask;
 //-------------------------------------------------------------------------------
 
 var aws             = enableModule("aws");
-var core            = enableModule("core");
-var nodejs          = enableModule("nodejs");
+var bugpack         = enableModule('bugpack');
+var bugunit         = enableModule('bugunit');
+var core            = enableModule('core');
+var nodejs          = enableModule('nodejs');
 var uglifyjs        = enableModule("uglifyjs");
 
 
@@ -36,7 +38,7 @@ buildProperties({
     bugpackNode: {
         packageJson: {
             name: "bugpack",
-            version: "0.0.5",
+            version: "0.0.6",
             main: "./lib/BugPackApi.js",
             private: true
         },
@@ -47,20 +49,42 @@ buildProperties({
     bugpackRegistry: {
         packageJson: {
             name: "bugpack-registry",
-            version: "0.0.5",
-            main: "./lib/BugPackRegistryBuilder.js",
-            private: true
+            version: "0.0.6",
+            main: "./scripts/bugpack-registry-module.js",
+            private: true,
+            dependencies: {
+                bugpack: 'https://s3.amazonaws.com/airbug/bugpack-0.0.5.tgz'
+            }
         },
         sourcePaths: [
+            "../bugjs/projects/buganno/js/src",
+            "../bugjs/projects/bugmeta/js/src",
+            "../bugjs/projects/bugflow/js/src",
+            "../bugjs/projects/bugfs/js/src",
+            "../bugjs/projects/bugjs/js/src",
+            "../bugjs/projects/bugtrace/js/src",
+            "../bugunit/projects/bugdouble/js/src",
+            "../bugunit/projects/bugunit/js/src",
             "./projects/bugpack-registry/js/src"
+        ],
+        scriptPaths: [
+            "../bugjs/projects/buganno/js/scripts",
+            "../bugunit/projects/bugunit/js/scripts",
+            "./projects/bugpack-registry/js/scripts"
+        ],
+        testPaths: [
+            "../bugjs/projects/buganno/js/test",
+            "../bugjs/projects/bugflow/js/test",
+            "../bugjs/projects/bugjs/js/test"
         ]
     },
     bugpackWeb: {
         name: "bugpack",
-        version: "0.0.1",
+        version: "0.0.6",
         sourcePaths: [
             "./projects/bugpack-client/js/src/BugPackKey.js",
             "./projects/bugpack-client/js/src/BugPackPackage.js",
+            "./projects/bugpack-client/js/src/BugPackLibrary.js",
             "./projects/bugpack-client/js/src/BugPackSource.js",
             "./projects/bugpack-client/js/src/BugPackRegistryEntry.js",
             "./projects/bugpack-client/js/src/BugPackRegistry.js",
@@ -142,13 +166,37 @@ buildTarget("local").buildFlow(
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackRegistry.packageJson"),
-                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths")
+                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths"),
+                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths"),
+                        testPaths: buildProject.getProperty("bugpackRegistry.testPaths")
+                    }
+                }),
+                targetTask('generateBugPackRegistry', {
+                    init: function(task, buildProject, properties) {
+                        var nodePackage = nodejs.findNodePackage(
+                            buildProject.getProperty("bugpackRegistry.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.packageJson.version")
+                        );
+                        task.updateProperties({
+                            sourceRoot: nodePackage.getBuildPath()
+                        });
                     }
                 }),
                 targetTask("packNodePackage", {
                     properties: {
                         packageName: "{{bugpackRegistry.packageJson.name}}",
                         packageVersion: "{{bugpackRegistry.packageJson.version}}"
+                    }
+                }),
+                targetTask('startNodeModuleTests', {
+                    init: function(task, buildProject, properties) {
+                        var packedNodePackage = nodejs.findPackedNodePackage(
+                            buildProject.getProperty("bugpackRegistry.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.packageJson.version")
+                        );
+                        task.updateProperties({
+                            modulePath: packedNodePackage.getFilePath()
+                        });
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -260,13 +308,37 @@ buildTarget("prod").buildFlow(
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackRegistry.packageJson"),
-                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths")
+                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths"),
+                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths"),
+                        testPaths: buildProject.getProperty("bugpackRegistry.testPaths")
+                    }
+                }),
+                targetTask('generateBugPackRegistry', {
+                    init: function(task, buildProject, properties) {
+                        var nodePackage = nodejs.findNodePackage(
+                            buildProject.getProperty("bugpackRegistry.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.packageJson.version")
+                        );
+                        task.updateProperties({
+                            sourceRoot: nodePackage.getBuildPath()
+                        });
                     }
                 }),
                 targetTask("packNodePackage", {
                     properties: {
                         packageName: "{{bugpackRegistry.packageJson.name}}",
                         packageVersion: "{{bugpackRegistry.packageJson.version}}"
+                    }
+                }),
+                targetTask('startNodeModuleTests', {
+                    init: function(task, buildProject, properties) {
+                        var packedNodePackage = nodejs.findPackedNodePackage(
+                            buildProject.getProperty("bugpackRegistry.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.packageJson.version")
+                        );
+                        task.updateProperties({
+                            modulePath: packedNodePackage.getFilePath()
+                        });
                     }
                 }),
                 targetTask("s3PutFile", {

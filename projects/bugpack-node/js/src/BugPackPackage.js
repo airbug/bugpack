@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------
-// Requires
+// Annotations
 //-------------------------------------------------------------------------------
 
 
@@ -13,13 +13,19 @@ var BugPackPackage = function(name) {
      * @private
      * @type {Object}
      */
-    this.exports = {};
+    this.exports        = {};
 
     /**
      * @private
      * @type {string}
      */
-    this.name = name;
+    this.name           = name;
+
+    /**
+     * @private
+     * @type {Array.<BugPackPackage>}
+     */
+    this.subPackages    = [];
 };
 
 
@@ -28,16 +34,37 @@ var BugPackPackage = function(name) {
 //-------------------------------------------------------------------------------
 
 /**
+ * @return {Object}
+ */
+BugPackPackage.prototype.getExports = function() {
+    return this.exports;
+};
+
+/**
  * @return {string}
  */
 BugPackPackage.prototype.getName = function() {
     return this.name;
 };
 
+/**
+ * @return {Array.<BugPackPackage>}
+ */
+BugPackPackage.prototype.getSubPackages = function() {
+    return this.subPackages;
+};
+
 
 //-------------------------------------------------------------------------------
 // Public Methods
 //-------------------------------------------------------------------------------
+
+/**
+ * @param {BugPackPackage} bugPackPackage
+ */
+BugPackPackage.prototype.addSubPackage = function(bugPackPackage) {
+    this.subPackages.push(bugPackPackage);
+};
 
 /**
  * @param {string} exportName
@@ -96,11 +123,6 @@ BugPackPackage.prototype.getExport = function(exportName) {
 BugPackPackage.prototype.hasExport = function(exportName) {
     return Object.prototype.hasOwnProperty.call(this.exports, exportName);
 };
-
-
-//-------------------------------------------------------------------------------
-// Private Methods
-//-------------------------------------------------------------------------------
 
 
 //-------------------------------------------------------------------------------

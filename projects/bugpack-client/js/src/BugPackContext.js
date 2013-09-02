@@ -8,62 +8,62 @@ var BugPackContext = function(contextUrl, bugPackApi) {
      * @private
      * @type {boolean}
      */
-    this.autoloaded = false;
+    this.autoloaded         = false;
 
     /**
      * @private
      * @type {BugPackApi}
      */
-    this.bugPackApi = bugPackApi;
+    this.bugPackApi         = bugPackApi;
 
     /**
      * @private
      * @type {string}
      */
-    this.contextUrl = contextUrl;
+    this.contextUrl         = contextUrl;
+
+    /**
+     * @private
+     * @type {BugPackLibrary}
+     */
+    this.library            = new BugPackLibrary();
 
     /**
      * @private
      * @type {boolean}
      */
-    this.loaded = false;
+    this.loaded             = false;
 
     /**
      * @private
      * @type {Array.<string>}
      */
-    this.loadStack = [];
+    this.loadStack          = [];
 
     /**
      * @private
      * @type {Object}
      */
-    this.packages = {};
-
-    /**
-     * @private
-     * @type {Object}
-     */
-    this.processedSources = {};
+    this.processedSources   = {};
 
     /**
      * @private
      * @type {BugPackRegistry}
      */
-    this.registry = new BugPackRegistry();
+    this.registry           = new BugPackRegistry();
 
     //TODO BRN: Add support for contextUrls in the form of "url/" and "url". Also support the default "*" which is a context that does not have a registry
     /**
      * @private
      * @type {BugPackRegistryFile}
      */
-    this.registryFile = new BugPackRegistryFile(contextUrl + "/bugpack-registry.json");
+    this.registryFile       = new BugPackRegistryFile(contextUrl + "/bugpack-registry.json");
 
     /**
      * @private
      * @type {Array.<string>}
      */
-    this.requireStack = [];
+    this.requireStack       = [];
 };
 
 
@@ -100,25 +100,20 @@ BugPackContext.prototype.autoload = function(callback) {
         var allEntriesProcessed = false;
         var autoloadComplete = false;
         registryEntries.forEach(function(registryEntry) {
-            var annotations = registryEntry.getAnnotations();
-            for (var i = 0, size = annotations.length; i < size; i++) {
-                var annotation = annotations[i];
-                if (annotation.name === "Autoload") {
-                    autoloadCount++;
-                    var bugPackSource = registryEntry.getBugPackSource();
-                    _this.loadSource(bugPackSource, function(error) {
-                        if (!error) {
-                            autoloadCompletedCount++;
-                            if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
-                                autoloadComplete = true;
-                                callback();
-                            }
-                        } else {
-                            callback(error);
+            if (registryEntry.getAutoload()) {
+                autoloadCount++;
+                var bugPackSource = registryEntry.getBugPackSource();
+                _this.loadSource(bugPackSource, function(error) {
+                    if (!error) {
+                        autoloadCompletedCount++;
+                        if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
+                            autoloadComplete = true;
+                            callback();
                         }
-                    });
-                    break;
-                }
+                    } else {
+                        callback(error);
+                    }
+                });
             }
         });
         allEntriesProcessed = true;
@@ -145,11 +140,19 @@ BugPackContext.prototype.export = function(bugPackKeyString, bugPackExport) {
 };
 
 /**
+ * @param {string} packageName
+ * @return {BugPackPackage}
+ */
+BugPackContext.prototype.getPackage = function(packageName) {
+    return this.library.getPackage(packageName);
+};
+
+/**
  * @param {string} bugPackKeyString
  * @return {*}
  */
 BugPackContext.prototype.require = function(bugPackKeyString) {
-    return this.requireExport(bugPackKeyString);
+    return this.requireByKey(bugPackKeyString);
 };
 
 
@@ -307,7 +310,7 @@ BugPackContext.prototype.processSource = function(bugPackSource, callback) {
  * @param {*} bugPackExport
  */
 BugPackContext.prototype.registerExport = function(packageName, exportName, bugPackExport) {
-    this.registry.registerExport(packageName, exportName, bugPackExport);
+    this.library.registerExport(packageName, exportName, bugPackExport);
 };
 
 /**
@@ -315,37 +318,74 @@ BugPackContext.prototype.registerExport = function(packageName, exportName, bugP
  * @param {string} bugPackKeyString
  * @return {*}
  */
-BugPackContext.prototype.requireExport = function(bugPackKeyString) {
+BugPackContext.prototype.requireByKey = function(bugPackKeyString) {
+    var requiredObject = undefined;
     var bugPackKey = this.generateBugPackKey(bugPackKeyString);
+    if (bugPackKey.isWildCard()) {
+        requiredObject = this.requirePackage(bugPackKey);
+    } else {
+        requiredObject = this.requireExport(bugPackKey);
+    }
+    return requiredObject;
+};
+
+/**
+ * @private
+ * @param {BugPackKey} bugPackKey
+ * @return {*}
+ */
+BugPackContext.prototype.requireExport = function(bugPackKey) {
     var key = bugPackKey.getKey();
     var exportName = bugPackKey.getExportName();
     var packageName = bugPackKey.getPackageName();
-    var exportObject = null;
+    var exportObject = undefined;
 
     if (this.requireStack.indexOf(key) !== -1) {
         throw new Error("Circular dependency in require calls. Requiring '" + key + "' which is already in the " +
             "require stack. " + JSON.stringify(this.requireStack));
     }
 
-    if (this.registry.hasPackage(packageName)) {
-        var bugPackPackage = this.registry.getPackage(packageName);
+    if (this.library.hasPackage(packageName)) {
+        var bugPackPackage = this.library.getPackage(packageName);
         this.requireStack.push(key);
         this.bugPackApi.setCurrentContext(this);
-        if (!bugPackPackage.hasExport(exportName)) {
-            if (this.registry.hasEntryForExport(packageName, exportName)) {
-                throw new Error("Export found but has not been loaded. Must first load '" + bugPackKeyString +
-                    "' before requiring it.");
-            } else {
-                throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
-                    "source has been registered for this export");
-            }
-        } else {
+        if (bugPackPackage.hasExport(exportName)) {
             exportObject = bugPackPackage.require(exportName);
         }
         this.requireStack.pop();
-    } else {
-        throw new Error("Registry does not have package '" + packageName + "'");
+    }
+
+    if (!exportObject) {
+        if (this.registry.hasEntryForExport(packageName, exportName)) {
+            throw new Error("Export found but has not been loaded. Must first load '" + bugPackKeyString +
+                "' before requiring it.");
+        } else {
+            throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
+                "source has been registered for this export");
+        }
     }
 
     return exportObject;
+};
+
+/**
+ * @private
+ * @param {BugPackKey} bugPackKey
+ * @return {*}
+ */
+BugPackContext.prototype.requirePackage = function(bugPackKey) {
+    var packageName = bugPackKey.getPackageName();
+    var packageObject = undefined;
+
+    if (this.library.hasPackage(packageName)) {
+        var bugPackPackage = this.library.getPackage(packageName);
+        packageObject = {};
+        var exports = bugPackPackage.getExports();
+        for (var exportName in exports) {
+            var exportKey = packageName + "." + exportName;
+            packageObject[exportName] = this.requireExport(exportKey);
+        }
+    }
+
+    return packageObject;
 };

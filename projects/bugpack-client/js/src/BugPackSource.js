@@ -82,10 +82,14 @@ BugPackSource.prototype.load = function() {
 // Private Methods
 //-------------------------------------------------------------------------------
 
-BugPackSource.prototype.loadComplete = function() {
+/**
+ * @private
+ * @param {Error) error
+ */
+BugPackSource.prototype.loadComplete = function(error) {
     this.loaded = true;
     this.loadCallbacks.forEach(function(loadCallback) {
-        loadCallback();
+        loadCallback(error);
     });
     this.loadCallbacks = [];
 };
@@ -110,7 +114,7 @@ BugPackSource.prototype.loadSource = function() {
     scriptLoader.onerror = function(event) {
         //TEST
         console.log("Error occurred in script loading - this.sourceFilePath:" + _this.sourceFilePath);
-        callback(new Error("script loading failed."));
+        _this.loadComplete(new Error("script loading failed."));
     };
     lastScript.parentNode.insertBefore(scriptLoader, lastScript.nextSibling);
 };

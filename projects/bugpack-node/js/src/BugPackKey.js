@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------
-// Requires
+// Annotations
 //-------------------------------------------------------------------------------
 
 
@@ -30,7 +30,7 @@ var BugPackKey = function(key) {
 
     /**
      * @private
-     * @type {String}
+     * @type {string}
      */
     this.packageName = packageName;
 };
@@ -59,6 +59,13 @@ BugPackKey.prototype.getExportName = function() {
  */
 BugPackKey.prototype.getPackageName = function() {
     return this.packageName;
+};
+
+/**
+ * @return {boolean}
+ */
+BugPackKey.prototype.isWildCard = function() {
+    return (this.exportName === "*");
 };
 
 
