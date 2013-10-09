@@ -135,7 +135,7 @@ var require = function(requireName) {
     if (requireName === "bugpack") {
         return BugPackApi;
     } else if (oldRequire !== undefined) {
-        oldRequire(requireName);
+        return oldRequire(requireName);
     } else {
         throw new Error("unknown require name '" + requireName + "'");
     }
