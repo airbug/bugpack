@@ -101,6 +101,7 @@ BugPackPackage.prototype.require = function(exportName) {
  * @param {*} bugPackExport
  */
 BugPackPackage.prototype.addExport = function(exportName, bugPackExport) {
+    this.markExport(exportName, bugPackExport);
     this.exports[exportName] = bugPackExport;
 };
 
@@ -122,6 +123,30 @@ BugPackPackage.prototype.getExport = function(exportName) {
  */
 BugPackPackage.prototype.hasExport = function(exportName) {
     return Object.prototype.hasOwnProperty.call(this.exports, exportName);
+};
+
+/**
+ * @private
+ * @param {string} exportName
+ * @param {*} bugPackExport
+ */
+BugPackPackage.prototype.markExport = function(exportName, bugPackExport) {
+    if (bugPackExport !== null && bugPackExport !== undefined) {
+        if (!bugPackExport._bugPack) {
+            Object.defineProperty(bugPackExport, "_bugPack", {
+                value : {
+                    packageName: this.name,
+                    exportName: exportName,
+                    bugPackKey: this.name + "." + exportName
+                },
+                writable : false,
+                enumerable : false,
+                configurable : false
+            });
+        } else {
+            throw new Error("Trying to mark a bugpack export that is already marked. Are you exporting the same value more than once?");
+        }
+    }
 };
 
 
