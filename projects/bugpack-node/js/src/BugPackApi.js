@@ -50,19 +50,23 @@ BugPackApi.setCurrentContext = function(context) {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {(Module|string)} moduleOrPath
+ * @param {(Module|string)} contextQuery
+ * @param {?function(BugPackContext)} contextFunction
  * @return {BugPackContext}
  */
-BugPackApi.context = function(moduleOrPath) {
+BugPackApi.context = function(contextQuery, contextFunction) {
 
     // NOTE BRN: Only packs in THIS node module will be autoloaded. We should not try to find EVERY module and load
     // all the registries.
 
-    if (moduleOrPath) {
-        BugPackApi.currentContext = BugPackApi.generateContext(moduleOrPath);
+    if (contextQuery && contextQuery !== "?") {
+        BugPackApi.currentContext = BugPackApi.generateContext(contextQuery);
         BugPackApi.currentContext.autoload();
     }
 
+    if (contextFunction) {
+        contextFunction(BugPackApi.currentContext);
+    }
     return BugPackApi.currentContext;
 };
 

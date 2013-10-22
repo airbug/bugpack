@@ -357,8 +357,14 @@ BugPackContext.prototype.requireExport = function(bugPackKey) {
 
     if (!exportObject) {
         if (this.registry.hasEntryForExport(packageName, exportName)) {
-            throw new Error("Export found but has not been loaded. Must first load '" + bugPackKeyString +
-                "' before requiring it.");
+            var registryEntry = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
+            var bugPackSource = registryEntry.getBugPackSource();
+            if (bugPackSource.hasLoaded()) {
+                throw new Error("Export found and it was loaded but nothing was exported. Ensure that '" + key + "' actually exports something by that name.");
+            } else {
+                throw new Error("Export found but has not been loaded. Must first load '" + key +
+                    "' before requiring it.");
+            }
         } else {
             throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
                 "source has been registered for this export");

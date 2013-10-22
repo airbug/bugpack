@@ -39,19 +39,23 @@ BugPackApi.setCurrentContext = function(context) {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {string} contextUrl
+ * @param {string} contextQuery
+ * @param {?function(BugPackContext)} contextFunction
  * @return {BugPackContext}
  */
-BugPackApi.context = function(contextUrl) {
-    if (contextUrl) {
-        var foundContext = BugPackApi.getContext(contextUrl);
+BugPackApi.context = function(contextQuery, contextFunction) {
+    if (contextQuery && contextQuery !== "*") {
+        var foundContext = BugPackApi.getContext(contextQuery);
         if (foundContext) {
             BugPackApi.currentContext = foundContext;
         } else {
-            throw new Error("No context loaded for '" + contextUrl + "'");
+            throw new Error("No context loaded for '" + contextQuery + "'");
         }
     } else if (!BugPackApi.currentContext) {
-        BugPackApi.currentContext = BugPackApi.generateContext("*");
+        BugPackApi.currentContext = BugPackApi.generateContext("default");
+    }
+    if (contextFunction) {
+        contextFunction(BugPackApi.currentContext);
     }
     return BugPackApi.currentContext;
 };
