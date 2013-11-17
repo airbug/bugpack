@@ -59,7 +59,7 @@ BugPackApi.context = function(contextQuery, contextFunction) {
     // NOTE BRN: Only packs in THIS node module will be autoloaded. We should not try to find EVERY module and load
     // all the registries.
 
-    if (contextQuery && contextQuery !== "?") {
+    if (contextQuery && contextQuery !== "*") {
         BugPackApi.currentContext = BugPackApi.generateContext(contextQuery);
         BugPackApi.currentContext.autoload();
     }
