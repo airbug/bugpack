@@ -29,7 +29,7 @@ var Obj             = bugpack.require('Obj');
 // Declare Class
 //-------------------------------------------------------------------------------
 
-var BugPackKey= Class.extend(Obj, {
+var BugPackKey = Class.extend(Obj, {
 
     //-------------------------------------------------------------------------------
     // Constructor
