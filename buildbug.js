@@ -58,10 +58,10 @@ buildProperties({
         },
         sourcePaths: [
             "../bugjs/projects/buganno/js/src",
-            "../bugjs/projects/bugmeta/js/src",
             "../bugjs/projects/bugflow/js/src",
             "../bugjs/projects/bugfs/js/src",
             "../bugjs/projects/bugjs/js/src",
+            "../bugjs/projects/bugmeta/js/src",
             "../bugjs/projects/bugtrace/js/src",
             "../bugunit/projects/bugdouble/js/src",
             "../bugunit/projects/bugunit/js/src",
