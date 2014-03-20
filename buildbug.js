@@ -127,11 +127,6 @@ buildTarget("local").buildFlow(
         // old source files are removed. We should figure out a better way of doing that.
 
         targetTask("clean"),
-        targetTask("s3EnsureBucket", {
-            properties: {
-                bucket: "{{local-bucket}}"
-            }
-        }),
         parallel([
             series([
                 targetTask("createNodePackage", {
@@ -269,11 +264,6 @@ buildTarget("prod").buildFlow(
         // old source files are removed. We should figure out a better way of doing that.
 
         targetTask("clean"),
-        targetTask("s3EnsureBucket", {
-            properties: {
-                bucket: "airbug"
-            }
-        }),
         parallel([
             series([
                 targetTask("createNodePackage", {
