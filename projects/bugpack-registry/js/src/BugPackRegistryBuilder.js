@@ -220,7 +220,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
 
 /**
  * @param {string} registryRoot
- * @param {Array.< (string | RegExp)>}
+ * @param {Array.<(string | RegExp)>} ignorePatterns
  * @param {function(Error, BugPackRegistry)} callback
  */
 BugPackRegistryBuilder.buildRegistry = function(registryRoot, ignorePatterns, callback) {
