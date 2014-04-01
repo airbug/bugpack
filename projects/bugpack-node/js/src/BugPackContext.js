@@ -163,10 +163,6 @@ BugPackContext.prototype.autoloadSync = function() {
  * @param {*} bugPackExport
  */
 BugPackContext.prototype.export = function(bugPackKeyString, bugPackExport) {
-
-    //TEST
-    console.log("Exporting '", bugPackKeyString, "'");
-
     if (!bugPackKeyString) {
         throw new Error("Expected string for 'bugPackKeyString' instead found ", bugPackKeyString);
     }
@@ -247,10 +243,6 @@ BugPackContext.prototype.loadExport = function(bugPackKeyString, callback) {
  * @param {string} bugPackKeyString
  */
 BugPackContext.prototype.loadExportSync = function(bugPackKeyString) {
-
-    //TEST
-    console.log("BugPackContext#loadExportSync - bugPackKeyString:", bugPackKeyString);
-
     var bugPackKey      = this.generateBugPackKey(bugPackKeyString);
     var registryEntry   = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
     if (registryEntry) {
@@ -448,10 +440,6 @@ BugPackContext.prototype.processSource = function(bugPackSource, callback) {
  * @param {BugPackSource} bugPackSource
  */
 BugPackContext.prototype.processSourceSync = function(bugPackSource) {
-
-    //TEST
-    console.log("Processing source '", bugPackSource.getSourceFilePath(), "'");
-
     var _this = this;
     this.processedSources[bugPackSource.getSourceFilePath()] = true;
     var registryEntry       = this.registry.getEntryBySourceFilePath(bugPackSource.getSourceFilePath());
