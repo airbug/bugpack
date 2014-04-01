@@ -9,13 +9,22 @@ var BugPackPackage = require('./BugPackPackage');
 // Declare Class
 //-------------------------------------------------------------------------------
 
+/**
+ * @constructor
+ */
 var BugPackLibrary = function() {
+
+    /**
+     * @private
+     * @type {BugPackPackage}
+     */
+    this.corePackage    = new BugPackPackage("");
 
     /**
      * @private
      * @type {Object}
      */
-    this.packages = {};
+    this.packages       = {};
 };
 
 
@@ -28,17 +37,11 @@ var BugPackLibrary = function() {
  * @return {BugPackPackage}
  */
 BugPackLibrary.prototype.createPackage = function(packageName) {
-    var corePackage = this.getPackage("");
-    if (!corePackage) {
-        corePackage = new BugPackPackage("");
-        this.packages[corePackage.getName()] = corePackage;
-    }
-
     var _this = this;
     var packageParts = packageName.split(".");
     var currentPackageString = "";
     var first = true;
-    var parentPackage = corePackage;
+    var parentPackage = this.corePackage;
     packageParts.forEach(function(packagePart) {
         if (first) {
             first = false;
@@ -53,6 +56,7 @@ BugPackLibrary.prototype.createPackage = function(packageName) {
             parentPackage = bugPackPackage;
         }
     });
+    return parentPackage;
 };
 
 /**
@@ -60,10 +64,12 @@ BugPackLibrary.prototype.createPackage = function(packageName) {
  * @return {BugPackPackage}
  */
 BugPackLibrary.prototype.getPackage = function(packageName) {
-    if (this.hasPackage(packageName)) {
+    if (packageName === "") {
+        return this.corePackage;
+    } else if (this.hasPackage(packageName)) {
         return this.packages[packageName];
     }
-    return undefined;
+    return null;
 };
 
 /**
@@ -71,7 +77,11 @@ BugPackLibrary.prototype.getPackage = function(packageName) {
  * @return {boolean}
  */
 BugPackLibrary.prototype.hasPackage = function(packageName) {
-    return Object.prototype.hasOwnProperty.call(this.packages, packageName);
+    if (packageName === "") {
+        return true;
+    } else {
+        return Object.prototype.hasOwnProperty.call(this.packages, packageName);
+    }
 };
 
 /**

@@ -13,13 +13,13 @@ var BugPackApi = {};
  * @private
  * @type {BugPackContext}
  */
-BugPackApi.currentContext = null;
+BugPackApi.currentContext               = null;
 
 /**
  * @private
  * @type {Object}
  */
-BugPackApi.contextUrlToBugPackContext = {};
+BugPackApi.contextUrlToBugPackContext   = {};
 
 
 //-------------------------------------------------------------------------------
@@ -39,20 +39,21 @@ BugPackApi.setCurrentContext = function(context) {
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @param {string} contextQuery
- * @param {?function(BugPackContext)} contextFunction
+ * @param {function(BugPackContext)=} contextFunction
  * @return {BugPackContext}
  */
 BugPackApi.context = function(contextQuery, contextFunction) {
     if (contextQuery && contextQuery !== "*") {
         var foundContext = BugPackApi.getContext(contextQuery);
         if (foundContext) {
-            BugPackApi.currentContext = foundContext;
+            BugPackApi.setCurrentContext(foundContext);
         } else {
             throw new Error("No context loaded for '" + contextQuery + "'");
         }
     } else if (!BugPackApi.currentContext) {
-        BugPackApi.currentContext = BugPackApi.generateContext("default");
+        BugPackApi.setCurrentContext(BugPackApi.generateContext("default"));
     }
     if (contextFunction) {
         contextFunction(BugPackApi.currentContext);
@@ -61,8 +62,9 @@ BugPackApi.context = function(contextQuery, contextFunction) {
 };
 
 /**
+ * @static
  * @param {string} contextUrl
- * @param {function(Error, BugPackContext)}
+ * @param {function(Error, BugPackContext=)} callback
  */
 BugPackApi.loadContext = function(contextUrl, callback) {
     if (!BugPackApi.hasContext(contextUrl)) {
@@ -91,6 +93,7 @@ BugPackApi.loadContext = function(contextUrl, callback) {
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @private
  * @param {string} contextUrl
  * @return {BugPackContext}
@@ -105,6 +108,7 @@ BugPackApi.generateContext = function(contextUrl) {
 };
 
 /**
+ * @static
  * @private
  * @param {string} contextUrl
  * @return {BugPackContext}
@@ -117,6 +121,7 @@ BugPackApi.getContext = function(contextUrl) {
 };
 
 /**
+ * @static
  * @private
  * @param {string} contextUrl
  * @return {boolean}
@@ -126,6 +131,7 @@ BugPackApi.hasContext = function(contextUrl) {
 };
 
 /**
+ * @static
  * @private
  * @param {string} contextUrl
  * @param {BugPackContext} context

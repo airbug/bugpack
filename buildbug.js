@@ -31,6 +31,13 @@ var uglifyjs        = enableModule("uglifyjs");
 
 
 //-------------------------------------------------------------------------------
+// Values
+//-------------------------------------------------------------------------------
+
+var version         = "0.1.0";
+
+
+//-------------------------------------------------------------------------------
 // Declare Properties
 //-------------------------------------------------------------------------------
 
@@ -38,49 +45,99 @@ buildProperties({
     bugpackNode: {
         packageJson: {
             name: "bugpack",
-            version: "0.0.6",
+            version: version,
+            description: "Package loader to help make browser and node js package loading consistent",
             main: "./lib/BugPackApi.js",
-            private: true
+            author: "Brian Neisler <brian@airbug.com>",
+            repository: {
+                type: "git",
+                url: "https://github.com/airbug/bugpack.git"
+            },
+            bugs: {
+                url: "https://github.com/airbug/bugpack/issues"
+            },
+            licenses: [
+                {
+                    type : "MIT",
+                    url : "https://raw.githubusercontent.com/airbug/bugpack/master/LICENSE"
+                }
+            ]
         },
         sourcePaths: [
             "./projects/bugpack-node/js/src"
-        ]
+        ],
+        readmePath: "./README.md"
     },
     bugpackRegistry: {
         packageJson: {
             name: "bugpack-registry",
-            version: "0.0.6",
+            version: version,
+            description: "Registry builder for the bugpack package loader",
             main: "./scripts/bugpack-registry-module.js",
-            private: true,
+            author: "Brian Neisler <brian@airbug.com>",
             dependencies: {
-                bugpack: 'https://s3.amazonaws.com/airbug/bugpack-0.0.5.tgz'
-            }
+                bugpack: 'https://s3.amazonaws.com/deploy-airbug/bugpack-0.0.5.tgz'
+            },
+            repository: {
+                type: "git",
+                url: "https://github.com/airbug/bugpack.git"
+            },
+            bugs: {
+                url: "https://github.com/airbug/bugpack/issues"
+            },
+            licenses: [
+                {
+                    type : "MIT",
+                    url : "https://raw.githubusercontent.com/airbug/bugpack/master/LICENSE"
+                }
+            ]
         },
         sourcePaths: [
+            "../bugcore/projects/bugcore/js/src",
             "../bugjs/projects/buganno/js/src",
             "../bugjs/projects/bugflow/js/src",
             "../bugjs/projects/bugfs/js/src",
-            "../bugjs/projects/bugjs/js/src",
             "../bugjs/projects/bugmeta/js/src",
             "../bugjs/projects/bugtrace/js/src",
-            "../bugunit/projects/bugdouble/js/src",
-            "../bugunit/projects/bugunit/js/src",
             "./projects/bugpack-registry/js/src"
         ],
         scriptPaths: [
             "../bugjs/projects/buganno/js/scripts",
-            "../bugunit/projects/bugunit/js/scripts",
             "./projects/bugpack-registry/js/scripts"
         ],
-        testPaths: [
-            "../bugjs/projects/buganno/js/test",
-            "../bugjs/projects/bugflow/js/test",
-            "../bugjs/projects/bugjs/js/test"
-        ]
+        unitTest: {
+            packageJson: {
+                name: "bugpack-registry-test",
+                version: version,
+                main: "./scripts/bugpack-registry-module.js",
+                dependencies: {
+                    bugpack: 'https://s3.amazonaws.com/deploy-airbug/bugpack-0.0.5.tgz'
+                },
+                scripts: {
+                    test: "node ./scripts/bugunit-run.js"
+                }
+            },
+            sourcePaths: [
+                "../bugjs/projects/bugyarn/js/src",
+                "../bugunit/projects/bugdouble/js/src",
+                "../bugunit/projects/bugunit/js/src"
+            ],
+            scriptPaths: [
+                "../bugunit/projects/bugunit/js/scripts"
+            ],
+            testPaths: [
+                "../bugcore/projects/bugcore/js/test",
+                "../bugjs/projects/buganno/js/test",
+                "../bugjs/projects/bugflow/js/test",
+                "../bugjs/projects/bugmeta/js/test",
+                "../bugjs/projects/bugtrace/js/test",
+                "./projects/bugpack-registry/js/test"
+            ]
+        }
     },
     bugpackWeb: {
         name: "bugpack",
-        version: "0.0.6",
+        version: "0.1.0",
         sourcePaths: [
             "./projects/bugpack-client/js/src/BugPackKey.js",
             "./projects/bugpack-client/js/src/BugPackPackage.js",
@@ -99,16 +156,11 @@ buildProperties({
 
 
 //-------------------------------------------------------------------------------
-// Declare Tasks
+// BuildTargets
 //-------------------------------------------------------------------------------
 
 
-//-------------------------------------------------------------------------------
-// Declare Flows
-//-------------------------------------------------------------------------------
-
-
-// Clean Flow
+// Clean BuildTarget
 //-------------------------------------------------------------------------------
 
 buildTarget("clean").buildFlow(
@@ -116,22 +168,19 @@ buildTarget("clean").buildFlow(
 );
 
 
-// Local Flow
+// Local BuildTarget
 //-------------------------------------------------------------------------------
 
 buildTarget("local").buildFlow(
 
     series([
-
-        // TODO BRN: This "clean" task is temporary until we"re not modifying the build so much. This also ensures that
-        // old source files are removed. We should figure out a better way of doing that.
-
         targetTask("clean"),
         parallel([
             series([
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackNode.packageJson"),
+                        readmePath: buildProject.getProperty("bugpackNode.readmePath"),
                         sourcePaths: buildProject.getProperty("bugpackNode.sourcePaths")
                     }
                 }),
@@ -148,12 +197,13 @@ buildTarget("local").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                acl: 'public-read'
+                                acl: 'public-read',
+                                encrypt: true
                             }
                         });
                     },
                     properties: {
-                        bucket: buildProject.getProperty("local-bucket")
+                        bucket: "{{local-bucket}}"
                     }
                 })
             ]),
@@ -161,9 +211,13 @@ buildTarget("local").buildFlow(
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackRegistry.packageJson"),
-                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths"),
-                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths"),
-                        testPaths: buildProject.getProperty("bugpackRegistry.testPaths")
+                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths").concat(
+                            buildProject.getProperty("bugpackRegistry.unitTest.sourcePaths")
+                        ),
+                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths").concat(
+                            buildProject.getProperty("bugpackRegistry.unitTest.scriptPaths")
+                        ),
+                        testPaths: buildProject.getProperty("bugpackRegistry.unitTest.testPaths")
                     }
                 }),
                 targetTask('generateBugPackRegistry', {
@@ -201,7 +255,8 @@ buildTarget("local").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                acl: 'public-read'
+                                acl: 'public-read',
+                                encrypt: true
                             }
                         });
                     },
@@ -253,22 +308,18 @@ buildTarget("local").buildFlow(
 ).makeDefault();
 
 
-// Prod Flow
+// Prod BuildTarget
 //-------------------------------------------------------------------------------
 
 buildTarget("prod").buildFlow(
-
     series([
-
-        // TODO BRN: This "clean" task is temporary until we"re not modifying the build so much. This also ensures that
-        // old source files are removed. We should figure out a better way of doing that.
-
         targetTask("clean"),
         parallel([
             series([
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackNode.packageJson"),
+                        readmePath: buildProject.getProperty("bugpackNode.readmePath"),
                         sourcePaths: buildProject.getProperty("bugpackNode.sourcePaths")
                     }
                 }),
@@ -285,22 +336,71 @@ buildTarget("prod").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                acl: 'public-read'
+                                acl: 'public-read',
+                                encrypt: true
                             }
                         });
                     },
                     properties: {
-                        bucket: "airbug"
+                        bucket: "{{prod-deploy-bucket}}"
                     }
                 })
             ]),
+
+            //Create test bugpack-registry package
+
             series([
-                targetTask("createNodePackage", {
+                targetTask('createNodePackage', {
+                    properties: {
+                        packageJson: buildProject.getProperty("bugpackRegistry.unitTest.packageJson"),
+                        sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths").concat(
+                            buildProject.getProperty("bugpackRegistry.unitTest.sourcePaths")
+                        ),
+                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths").concat(
+                            buildProject.getProperty("bugpackRegistry.unitTest.scriptPaths")
+                        ),
+                        testPaths: buildProject.getProperty("bugpackRegistry.unitTest.testPaths")
+                    }
+                }),
+                targetTask('generateBugPackRegistry', {
+                    init: function(task, buildProject, properties) {
+                        var nodePackage = nodejs.findNodePackage(
+                            buildProject.getProperty("bugpackRegistry.unitTest.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.unitTest.packageJson.version")
+                        );
+                        task.updateProperties({
+                            sourceRoot: nodePackage.getBuildPath()
+                        });
+                    }
+                }),
+                targetTask('packNodePackage', {
+                    properties: {
+                        packageName: "{{bugpackRegistry.unitTest.packageJson.name}}",
+                        packageVersion: "{{bugpackRegistry.unitTest.packageJson.version}}"
+                    }
+                }),
+                targetTask('startNodeModuleTests', {
+                    init: function(task, buildProject, properties) {
+                        var packedNodePackage = nodejs.findPackedNodePackage(
+                            buildProject.getProperty("bugpackRegistry.unitTest.packageJson.name"),
+                            buildProject.getProperty("bugpackRegistry.unitTest.packageJson.version")
+                        );
+                        task.updateProperties({
+                            modulePath: packedNodePackage.getFilePath(),
+                            checkCoverage: true
+                        });
+                    }
+                })
+            ]),
+
+            // Create production bugpack-registry package
+
+            series([
+                targetTask('createNodePackage', {
                     properties: {
                         packageJson: buildProject.getProperty("bugpackRegistry.packageJson"),
                         sourcePaths: buildProject.getProperty("bugpackRegistry.sourcePaths"),
-                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths"),
-                        testPaths: buildProject.getProperty("bugpackRegistry.testPaths")
+                        scriptPaths: buildProject.getProperty("bugpackRegistry.scriptPaths")
                     }
                 }),
                 targetTask('generateBugPackRegistry', {
@@ -314,21 +414,10 @@ buildTarget("prod").buildFlow(
                         });
                     }
                 }),
-                targetTask("packNodePackage", {
+                targetTask('packNodePackage', {
                     properties: {
                         packageName: "{{bugpackRegistry.packageJson.name}}",
                         packageVersion: "{{bugpackRegistry.packageJson.version}}"
-                    }
-                }),
-                targetTask('startNodeModuleTests', {
-                    init: function(task, buildProject, properties) {
-                        var packedNodePackage = nodejs.findPackedNodePackage(
-                            buildProject.getProperty("bugpackRegistry.packageJson.name"),
-                            buildProject.getProperty("bugpackRegistry.packageJson.version")
-                        );
-                        task.updateProperties({
-                            modulePath: packedNodePackage.getFilePath()
-                        });
                     }
                 }),
                 targetTask("s3PutFile", {
@@ -338,12 +427,13 @@ buildTarget("prod").buildFlow(
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
-                                acl: 'public-read'
+                                acl: 'public-read',
+                                encrypt: true
                             }
                         });
                     },
                     properties: {
-                        bucket: "airbug"
+                        bucket: "{{prod-deploy-bucket}}"
                     }
                 })
             ]),
@@ -362,7 +452,7 @@ buildTarget("prod").buildFlow(
                                 acl: 'public-read',
                                 gzip: true
                             },
-                            bucket: "airbug"
+                            bucket: "{{prod-deploy-bucket}}"
                         }
                     }),
                     series([
@@ -379,7 +469,7 @@ buildTarget("prod").buildFlow(
                                     acl: 'public-read',
                                     gzip: true
                                 },
-                                bucket: "airbug"
+                                bucket: "{{prod-deploy-bucket}}"
                             }
                         })
                     ])

@@ -61,7 +61,7 @@ BugPackRegistryEntry.prototype.getAutoload = function() {
 };
 
 /**
- * @return {string}
+ * @return {BugPackSource}
  */
 BugPackRegistryEntry.prototype.getBugPackSource = function() {
     return this.bugPackSource;

@@ -62,7 +62,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
     //-------------------------------------------------------------------------------
 
     /**
-     *
+     * @constructs
      */
     _constructor: function() {
 
@@ -88,14 +88,14 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
     /**
      * @param {(string | Path)} registryRoot
      * @param {List.<(string | RegExp)>} ignorePatterns
-     * @param {function(Error, BugPackRegistry)} callback
+     * @param {function(Error, BugPackRegistry=)} callback
      */
     build: function(registryRoot, ignorePatterns, callback) {
-        var _this = this;
-        var registryRootPath  = BugFs.path(registryRoot);
-        var bugPackRegistry = undefined;
-        var fileFinder = new FileFinder([".*\\.js"], ignorePatterns);
-        var filePaths = undefined;
+        var _this               = this;
+        var registryRootPath    = BugFs.path(registryRoot);
+        var bugPackRegistry     = null;
+        var fileFinder          = new FileFinder([".*\\.js"], ignorePatterns);
+        var filePaths           = null;
         $series([
             $task(function(flow) {
                 fileFinder.scan([registryRootPath], function(error, _filePaths) {
@@ -115,7 +115,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
             })
         ]).execute(function(error) {
             if (!error) {
-                callback(undefined, bugPackRegistry);
+                callback(null, bugPackRegistry);
             } else {
                 callback(error);
             }
@@ -136,7 +136,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
         var annotationList = annotationRegistry.getAnnotationList();
         for (var i = 0, size = annotationList.getCount(); i < size; i++) {
             var annotation = annotationList.getAt(i);
-            var type = annotation.getType();
+            var type = annotation.getAnnotationType();
             if (type === "Autoload") {
                 return true;
             }
@@ -152,7 +152,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
     findExportSet: function(annotationRegistry) {
         var exportSet = new Set();
         annotationRegistry.getAnnotationList().forEach(function(annotation) {
-            var type = annotation.getType();
+            var type = annotation.getAnnotationType();
             var argumentList = annotation.getArgumentList();
             if (type === 'Export') {
                 var exportName = argumentList.getAt(0);
@@ -170,7 +170,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
     findRequireSet: function(annotationRegistry) {
         var requireSet = new Set();
         annotationRegistry.getAnnotationList().forEach(function(annotation) {
-            var type = annotation.getType();
+            var type = annotation.getAnnotationType();
             var argumentList = annotation.getArgumentList();
             if (type === 'Require') {
                 var requireName = argumentList.getAt(0);
@@ -181,6 +181,7 @@ var BugPackRegistryBuilder = Class.extend(Obj, {
     },
 
     /**
+     * @private
      * @param {Path} registryRootPath
      * @param {AnnotationRegistryLibrary} annotationRegistryLibrary
      * @return {BugPackRegistry}

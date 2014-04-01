@@ -2,34 +2,38 @@
 // Requires
 //-------------------------------------------------------------------------------
 
-var fs = require('fs');
-var path = require('path');
+var fs      = require('fs');
+var path    = require('path');
 
 
 //-------------------------------------------------------------------------------
 // Declare Class
 //-------------------------------------------------------------------------------
 
+/**
+ * @constructor
+ * @param {string} sourceFilePath
+ */
 var BugPackSource = function(sourceFilePath) {
 
     /**
      * @private
      * @type boolean}
      */
-    this.loaded = false;
+    this.loaded         = false;
 
 
     /**
      * @private
      * @type {Array}
      */
-    this.loadCallbacks = [];
+    this.loadCallbacks  = [];
 
     /**
      * @private
      * @type {boolean}
      */
-    this.loadStarted = false;
+    this.loadStarted    = false;
 
     /**
      * @private
@@ -56,8 +60,8 @@ BugPackSource.prototype.getSourceFilePath = function() {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {function(event)}
-    */
+ * @param {function(Error=)} callback
+ */
 BugPackSource.prototype.addLoadCallback = function(callback) {
     this.loadCallbacks.push(callback);
 };
@@ -82,7 +86,7 @@ BugPackSource.prototype.hasLoadStarted = function() {
 BugPackSource.prototype.loadSync = function() {
     if (!this.loaded) {
         this.loaded = true;
-        this.loadSource();
+        this.loadSourceSync();
     }
 };
 
@@ -93,7 +97,7 @@ BugPackSource.prototype.loadSync = function() {
 
 /**
  * @private
- * @param {Error) error
+ * @param {Error=} error
  */
 BugPackSource.prototype.loadComplete = function(error) {
     this.loaded = true;
@@ -114,6 +118,22 @@ BugPackSource.prototype.loadSource = function() {
         error = e;
     }
     this.loadComplete(error);
+};
+
+/**
+ * @private
+ */
+BugPackSource.prototype.loadSourceSync = function() {
+    var error = undefined;
+    try {
+        require(this.sourceFilePath);
+    } catch(e) {
+        error = e;
+    }
+    this.loadComplete(error);
+    if (error) {
+        throw error;
+    }
 };
 
 

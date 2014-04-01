@@ -17,8 +17,28 @@ var PathUtil = {};
 //-------------------------------------------------------------------------------
 
 /**
- * @private
  * @param {string} path
+ * @param {function(Error, boolean)} callback
+ */
+PathUtil.isDirectory = function(path, callback) {
+    fs.exists(path, function(exists) {
+        if (exists) {
+            fs.stat(path, function(error, stats) {
+                if (!error) {
+                    callback(null, stats.isDirectory());
+                } else {
+                    callback(error, false);
+                }
+            });
+        } else {
+            callback(null, false);
+        }
+    });
+};
+
+/**
+ * @param {string} path
+ * @return {boolean}
  */
 PathUtil.isDirectorySync = function(path) {
     if (fs.existsSync(path)) {
@@ -29,8 +49,28 @@ PathUtil.isDirectorySync = function(path) {
 };
 
 /**
- * @private
  * @param {string} path
+ * @param {function(Error, boolean)} callback
+ */
+PathUtil.isFile = function(path, callback) {
+    fs.exists(path, function(exists) {
+        if (exists) {
+            fs.stat(path, function(error, stats) {
+                if (!error) {
+                    callback(null, stats.isFile());
+                } else {
+                    callback(error, false);
+                }
+            });
+        } else {
+            callback(null, false);
+        }
+    });
+};
+
+/**
+ * @param {string} path
+ * @return {boolean}
  */
 PathUtil.isFileSync = function(path) {
     if (fs.existsSync(path)) {

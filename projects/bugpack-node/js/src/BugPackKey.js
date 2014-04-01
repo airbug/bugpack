@@ -9,15 +9,9 @@
 
 var BugPackKey = function(key) {
 
-    /**
-     * @private
-     * @type {string}
-     */
-    this.key = key;
-
-    var keyParts = key.split('.');
-    var packageName = ".";
-    var exportName = keyParts.pop();
+    var keyParts        = key.split('.');
+    var packageName     = "";
+    var exportName      = keyParts.pop();
     if (keyParts.length > 0) {
         packageName = keyParts.join('.');
     }
@@ -26,26 +20,25 @@ var BugPackKey = function(key) {
      * @private
      * @type {string}
      */
-    this.exportName = exportName;
+    this.exportName     = exportName;
 
     /**
      * @private
      * @type {string}
      */
-    this.packageName = packageName;
+    this.key            = key;
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.packageName    = packageName;
 };
 
 
 //-------------------------------------------------------------------------------
 // Getters and Setters
 //-------------------------------------------------------------------------------
-
-/**
- * @return {string}
- */
-BugPackKey.prototype.getKey = function() {
-    return this.key;
-};
 
 /**
  * @return {string}
@@ -57,9 +50,21 @@ BugPackKey.prototype.getExportName = function() {
 /**
  * @return {string}
  */
+BugPackKey.prototype.getKey = function() {
+    return this.key;
+};
+
+/**
+ * @return {string}
+ */
 BugPackKey.prototype.getPackageName = function() {
     return this.packageName;
 };
+
+
+//-------------------------------------------------------------------------------
+// Convenience Methods
+//-------------------------------------------------------------------------------
 
 /**
  * @return {boolean}

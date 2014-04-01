@@ -32,10 +32,23 @@ BugPackRegistryFile.prototype.getRegistryPath = function() {
 };
 
 /**
- *
+ * @param {function(Error, Object=)} callback
  */
-BugPackRegistryFile.prototype.loadRegistryContents = function() {
-    return JSON.parse(fs.readFileSync(this.registryFilePath, "utf8"));
+BugPackRegistryFile.prototype.loadRegistryContents = function(callback) {
+    fs.readFile(this.registryFilePath, {encoding: "utf8"}, function(error, data) {
+        if (!error) {
+            callback(null, JSON.parse(data));
+        } else {
+            callback(error);
+        }
+    });
+};
+
+/**
+ * @return {Object}
+ */
+BugPackRegistryFile.prototype.loadRegistryContentsSync = function() {
+    return JSON.parse(fs.readFileSync(this.registryFilePath, {encoding: "utf8"}));
 };
 
 

@@ -2,11 +2,11 @@
 // Requires
 //-------------------------------------------------------------------------------
 
-var fs = require('fs');
-var path = require('path');
+var fs                  = require('fs');
+var path                = require('path');
 
-var BugPackContext = require('./BugPackContext');
-var PathUtil = require('./PathUtil');
+var BugPackContext      = require('./BugPackContext');
+var PathUtil            = require('./PathUtil');
 
 
 //-------------------------------------------------------------------------------
@@ -21,16 +21,18 @@ var BugPackApi = {};
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @private
  * @type {BugPackContext}
  */
-BugPackApi.currentContext = null;
+BugPackApi.currentContext           = null;
 
 /**
+ * @static
  * @private
  * @type {Object}
  */
-BugPackApi.moduleTopDirToContext = {};
+BugPackApi.moduleTopDirToContext    = {};
 
 
 //-------------------------------------------------------------------------------
@@ -38,6 +40,7 @@ BugPackApi.moduleTopDirToContext = {};
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @param {BugPackContext} context
  */
 BugPackApi.setCurrentContext = function(context) {
@@ -50,24 +53,64 @@ BugPackApi.setCurrentContext = function(context) {
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @param {(Module|string)} contextQuery
- * @param {?function(BugPackContext)} contextFunction
+ * @param {function(BugPackContext)=} contextFunction
  * @return {BugPackContext}
  */
 BugPackApi.context = function(contextQuery, contextFunction) {
-
-    // NOTE BRN: Only packs in THIS node module will be autoloaded. We should not try to find EVERY module and load
-    // all the registries.
-
     if (contextQuery && contextQuery !== "*") {
-        BugPackApi.currentContext = BugPackApi.generateContext(contextQuery);
-        BugPackApi.currentContext.autoload();
+        var moduleTopDir = BugPackApi.findModuleTopDir(contextQuery);
+        var foundContext = BugPackApi.getContextForModuleTopDir(moduleTopDir);
+        if (foundContext) {
+            BugPackApi.setCurrentContext(foundContext);
+        } else {
+            throw new Error("No context loaded for '" + contextQuery + "'");
+        }
+    } else if (!BugPackApi.currentContext) {
+        BugPackApi.setCurrentContext(BugPackApi.generateContext("default"));
     }
-
     if (contextFunction) {
         contextFunction(BugPackApi.currentContext);
     }
     return BugPackApi.currentContext;
+};
+
+/**
+ * @static
+ * @param {(Module|string)} contextQuery
+ * @param {function(Error, BugPackContext=)} callback
+ */
+BugPackApi.loadContext = function(contextQuery, callback) {
+    var moduleTopDir = BugPackApi.findModuleTopDir(contextQuery);
+    if (!BugPackApi.hasContextForModuleTopDir(moduleTopDir)) {
+        var context = BugPackApi.generateContext(contextQuery);
+        context.loadContext(function(error) {
+            if (!error) {
+                callback(null, context);
+            } else {
+                callback(error);
+            }
+        });
+    } else {
+        callback(null, BugPackApi.getContextForModuleTopDir(moduleTopDir));
+    }
+};
+
+/**
+ * @static
+ * @param {(Module|string)} contextQuery
+ * @return {BugPackContext}
+ */
+BugPackApi.loadContextSync = function(contextQuery) {
+    var moduleTopDir = BugPackApi.findModuleTopDir(contextQuery);
+    if (!BugPackApi.hasContextForModuleTopDir(moduleTopDir)) {
+        var context = BugPackApi.generateContext(contextQuery);
+        context.loadContextSync();
+        return context;
+    } else {
+        return BugPackApi.getContextForModuleTopDir(moduleTopDir);
+    }
 };
 
 
@@ -76,6 +119,7 @@ BugPackApi.context = function(contextQuery, contextFunction) {
 //-------------------------------------------------------------------------------
 
 /**
+ * @static
  * @private
  * @param {(Module|string)} moduleOrPath
  * @return {string}
@@ -97,6 +141,8 @@ BugPackApi.findModuleTopDir = function(moduleOrPath) {
 };
 
 /**
+ * @static
+ * @private
  * @param {(Module|string)} moduleOrPath
  * @return {BugPackContext}
  */
@@ -105,15 +151,16 @@ BugPackApi.generateContext = function(moduleOrPath) {
     var context = BugPackApi.getContextForModuleTopDir(moduleTopDir);
     if (!context) {
         context = new BugPackContext(moduleTopDir, this);
-        context.generate();
         BugPackApi.putContextForModuleTopDir(moduleTopDir, context);
     }
     return context;
 };
 
 /**
- *
- * @param moduleTopDir
+ * @static
+ * @private
+ * @param {string} moduleTopDir
+ * @return {BugPackContext}
  */
 BugPackApi.getContextForModuleTopDir = function(moduleTopDir) {
     if (BugPackApi.hasContextForModuleTopDir(moduleTopDir)) {
@@ -123,6 +170,7 @@ BugPackApi.getContextForModuleTopDir = function(moduleTopDir) {
 };
 
 /**
+ * @static
  * @private
  * @param {string} moduleTopDir
  * @return {boolean}
@@ -132,6 +180,7 @@ BugPackApi.hasContextForModuleTopDir  = function(moduleTopDir) {
 };
 
 /**
+ * @static
  * @private
  * @param {string} path
  */
@@ -144,9 +193,10 @@ BugPackApi.isNodeModuleDirSync = function(path) {
 };
 
 /**
+ * @static
  * @private
- * @param moduleTopDir
- * @param context
+ * @param {string} moduleTopDir
+ * @param {BugPackContext} context
  */
 BugPackApi.putContextForModuleTopDir = function(moduleTopDir, context) {
     BugPackApi.moduleTopDirToContext[moduleTopDir] = context;
