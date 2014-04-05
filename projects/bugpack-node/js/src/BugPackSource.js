@@ -83,6 +83,16 @@ BugPackSource.prototype.hasLoadStarted = function() {
 /**
  *
  */
+BugPackSource.prototype.load = function() {
+    if (!this.loaded && !this.loadStarted) {
+        this.loadStarted = true;
+        this.loadSource();
+    }
+};
+
+/**
+ *
+ */
 BugPackSource.prototype.loadSync = function() {
     if (!this.loaded) {
         this.loaded = true;

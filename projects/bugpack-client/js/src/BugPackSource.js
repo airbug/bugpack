@@ -84,7 +84,7 @@ BugPackSource.prototype.load = function() {
 
 /**
  * @private
- * @param {Error) error
+ * @param {Error=} error
  */
 BugPackSource.prototype.loadComplete = function(error) {
     this.loaded = true;

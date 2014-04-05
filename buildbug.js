@@ -2,39 +2,39 @@
 // Requires
 //-------------------------------------------------------------------------------
 
-var buildbug        = require("buildbug");
+var buildbug            = require("buildbug");
 
 
 //-------------------------------------------------------------------------------
 // Simplify References
 //-------------------------------------------------------------------------------
 
-var buildProject    = buildbug.buildProject;
-var buildProperties = buildbug.buildProperties;
-var buildTarget     = buildbug.buildTarget;
-var enableModule    = buildbug.enableModule;
-var parallel        = buildbug.parallel;
-var series          = buildbug.series;
-var targetTask      = buildbug.targetTask;
+var buildProject        = buildbug.buildProject;
+var buildProperties     = buildbug.buildProperties;
+var buildTarget         = buildbug.buildTarget;
+var enableModule        = buildbug.enableModule;
+var parallel            = buildbug.parallel;
+var series              = buildbug.series;
+var targetTask          = buildbug.targetTask;
 
 
 //-------------------------------------------------------------------------------
 // Enable Modules
 //-------------------------------------------------------------------------------
 
-var aws             = enableModule("aws");
-var bugpack         = enableModule('bugpack');
-var bugunit         = enableModule('bugunit');
-var core            = enableModule('core');
-var nodejs          = enableModule('nodejs');
-var uglifyjs        = enableModule("uglifyjs");
+var aws                 = enableModule("aws");
+var bugpack             = enableModule('bugpack');
+var bugunit             = enableModule('bugunit');
+var core                = enableModule('core');
+var nodejs              = enableModule('nodejs');
+var uglifyjs            = enableModule("uglifyjs");
 
 
 //-------------------------------------------------------------------------------
 // Values
 //-------------------------------------------------------------------------------
 
-var version         = "0.1.0";
+var version         = "0.1.1";
 
 
 //-------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ buildProperties({
     },
     bugpackWeb: {
         name: "bugpack",
-        version: "0.1.0",
+        version: version,
         sourcePaths: [
             "./projects/bugpack-client/js/src/BugPackKey.js",
             "./projects/bugpack-client/js/src/BugPackPackage.js",
