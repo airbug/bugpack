@@ -204,7 +204,23 @@ BugPackApi.putContextForModuleTopDir = function(moduleTopDir, context) {
 
 
 //-------------------------------------------------------------------------------
+// Global
+//-------------------------------------------------------------------------------
+
+// NOTE BRN: We store the BugPackApi in global context so that we can cross load BugPackContexts in the same process.
+// We can't do this simply through the require() mechanism because each file loads its BugPack based on
+// what dependency is relative to the current node js module. So if you are cross loading contexts, you end up with
+// an entirely different BugPackApi that has no contexts at all in memory.
+
+//TODO BRN: Add a version check to throw an error when different versions of bugpack cross load.
+
+if (!global.BugPackApi) {
+    global.BugPackApi = BugPackApi;
+}
+
+
+//-------------------------------------------------------------------------------
 // Exports
 //-------------------------------------------------------------------------------
 
-module.exports = BugPackApi;
+module.exports = global.BugPackApi;
