@@ -2,28 +2,30 @@
 // Declare Class
 //-------------------------------------------------------------------------------
 
+/**
+ * @constructor
+ * @param {string} name
+ */
 var BugPackPackage = function(name) {
 
     /**
      * @private
      * @type {Object}
      */
-    this.exports = {};
+    this.exports        = {};
 
     /**
      * @private
      * @type {string}
      */
-    this.name = name;
+    this.name           = name;
 
     /**
      * @private
      * @type {Array.<BugPackPackage>}
      */
-    this.subPackages = [];
+    this.subPackages    = [];
 };
-
-
 
 
 //-------------------------------------------------------------------------------

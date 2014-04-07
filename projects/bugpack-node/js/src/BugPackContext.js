@@ -28,61 +28,61 @@ var BugPackContext = function(moduleTopDir, bugPackApi) {
      * @private
      * @type {boolean}
      */
-    this.autoloaded         = false;
+    this.autoloaded             = false;
 
     /**
      * @private
      * @type {BugPackApi}
      */
-    this.bugPackApi         = bugPackApi;
+    this.bugPackApi             = bugPackApi;
 
     /**
      * @private
      * @type {boolean}
      */
-    this.generated          = false;
+    this.generated              = false;
 
     /**
      * @private
      * @type {boolean}
      */
-    this.loaded             = false;
+    this.loaded                 = false;
 
     /**
      * @private
      * @type {BugPackLibrary}
      */
-    this.library            = new BugPackLibrary();
-
-    /**
-     * @private
-     * @type {Array.<string>}
-     */
-    this.loadStack          = [];
+    this.library                = new BugPackLibrary();
 
     /**
      * @private
      * @type {string}
      */
-    this.moduleTopDir       = moduleTopDir;
+    this.moduleTopDir           = moduleTopDir;
 
     /**
      * @private
      * @type {Object}
      */
-    this.processedSources   = {};
+    this.processedSources       = {};
+
+    /**
+     * @private
+     * @type {Array.<string>}
+     */
+    this.processingExportStack  = [];
 
     /**
      * @private
      * @type {BugPackRegistry}
      */
-    this.registry           = new BugPackRegistry();
+    this.registry               = new BugPackRegistry();
 
     /**
      * @private
      * @type {Array<string>}
      */
-    this.requireStack       = [];
+    this.requireStack           = [];
 };
 
 
@@ -101,62 +101,6 @@ BugPackContext.prototype.getRegistry = function() {
 //-------------------------------------------------------------------------------
 // Public Methods
 //-------------------------------------------------------------------------------
-
-/**
- * @param {function(Error=)} callback
- */
-BugPackContext.prototype.autoload = function(callback) {
-    var _this = this;
-    if (!this.autoloaded) {
-        this.autoloaded = true;
-        var registry = this.getRegistry();
-        var registryEntries = registry.getRegistryEntries();
-        var autoloadCount = 0;
-        var autoloadCompletedCount = 0;
-        var allEntriesProcessed = false;
-        var autoloadComplete = false;
-        registryEntries.forEach(function(registryEntry) {
-            if (registryEntry.getAutoload()) {
-                autoloadCount++;
-                var bugPackSource = registryEntry.getBugPackSource();
-                _this.loadSource(bugPackSource, function(error) {
-                    if (!error) {
-                        autoloadCompletedCount++;
-                        if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
-                            autoloadComplete = true;
-                            callback();
-                        }
-                    } else {
-                        callback(error);
-                    }
-                });
-            }
-        });
-        allEntriesProcessed = true;
-        if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
-            autoloadComplete = true;
-            callback();
-        }
-    }
-};
-
-/**
- *
- */
-BugPackContext.prototype.autoloadSync = function() {
-    var _this = this;
-    if (!this.autoloaded) {
-        this.autoloaded = true;
-        var registry                = this.getRegistry();
-        var registryEntries         = registry.getRegistryEntries();
-        registryEntries.forEach(function(registryEntry) {
-            if (registryEntry.getAutoload()) {
-                var bugPackSource = registryEntry.getBugPackSource();
-                _this.loadSourceSync(bugPackSource);
-            }
-        });
-    }
-};
 
 /**
  * @param {string} bugPackKeyString
@@ -222,18 +166,11 @@ BugPackContext.prototype.loadContextSync = function() {
  * @param {function(Error=)} callback
  */
 BugPackContext.prototype.loadExport = function(bugPackKeyString, callback) {
-    var bugPackKey = this.generateBugPackKey(bugPackKeyString);
-    var registryEntry = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
+    var bugPackKey      = this.generateBugPackKey(bugPackKeyString);
+    var registryEntry   = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
     if (registryEntry) {
         var bugPackSource = registryEntry.getBugPackSource();
-        if (this.loadStack.indexOf(bugPackKeyString) !== -1) {
-            callback(new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
-                "load stack. " + JSON.stringify(this.loadStack)));
-        } else {
-            this.loadStack.push(bugPackKeyString);
-            this.loadSource(bugPackSource, callback);
-            this.loadStack.pop();
-        }
+        this.processBugPackSource(bugPackSource, callback);
     } else {
         callback(new Error("Cannot find registry entry '" + bugPackKeyString + "'"));
     }
@@ -247,14 +184,7 @@ BugPackContext.prototype.loadExportSync = function(bugPackKeyString) {
     var registryEntry   = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
     if (registryEntry) {
         var bugPackSource = registryEntry.getBugPackSource();
-        if (this.loadStack.indexOf(bugPackKeyString) !== -1) {
-            throw new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
-                "load stack. " + JSON.stringify(this.loadStack));
-        } else {
-            this.loadStack.push(bugPackKeyString);
-            this.loadSourceSync(bugPackSource);
-            this.loadStack.pop();
-        }
+        this.processBugPackSourceSync(bugPackSource);
     } else {
         throw new Error("Cannot find registry entry '" + bugPackKeyString + "'");
     }
@@ -307,6 +237,79 @@ BugPackContext.prototype.loadExportsSync = function(bugPackKeyStrings, callback)
 };
 
 /**
+ * @param {string} sourceFilePath
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.loadSource = function(sourceFilePath, callback) {
+    var registryEntry   = this.registry.getEntryBySourceFilePath(sourceFilePath);
+    if (registryEntry) {
+        var bugPackSource = registryEntry.getBugPackSource();
+        this.processBugPackSource(bugPackSource, callback);
+    } else {
+        callback(new Error("Cannot find registry entry for source file '" + sourceFilePath + "'"));
+    }
+};
+
+/**
+ * @param {string} sourceFilePath
+ */
+BugPackContext.prototype.loadSourceSync = function(sourceFilePath) {
+    var registryEntry   = this.registry.getEntryBySourceFilePath(sourceFilePath);
+    if (registryEntry) {
+        var bugPackSource = registryEntry.getBugPackSource();
+        this.processBugPackSourceSync(bugPackSource);
+    } else {
+        throw new Error("Cannot find registry entry for source file '" + sourceFilePath + "'");
+    }
+};
+
+/**
+ * @param {Array.<string>} sourceFilePaths
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.loadSources = function(sourceFilePaths, callback) {
+    var _this           = this;
+    var loadCount       = 0;
+    var error           = null;
+
+    if (sourceFilePaths instanceof Array) {
+        var expectedCount   = sourceFilePaths.length;
+        if (expectedCount > 0) {
+            sourceFilePaths.forEach(function(sourceFilePath) {
+                _this.loadSource(sourceFilePath, function(returnedError) {
+                    loadCount++;
+                    if (returnedError) {
+                        error = returnedError;
+                    }
+                    if (loadCount === expectedCount) {
+                        callback(error);
+                    }
+                });
+            });
+        } else {
+            callback();
+        }
+    } else {
+        callback(new Error("sourceFilePaths must be an Array"));
+    }
+};
+
+/**
+ * @param {Array.<string>} sourceFilePaths
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.loadSourcesSync = function(sourceFilePaths, callback) {
+    var _this           = this;
+    if (sourceFilePaths instanceof Array) {
+        sourceFilePaths.forEach(function(sourceFilePath) {
+            _this.loadSourceSync(sourceFilePath);
+        });
+    } else {
+        throw new Error("sourceFilePaths must be an Array");
+    }
+};
+
+/**
  * @param {string} bugPackKeyString
  * @return {*}
  */
@@ -318,6 +321,64 @@ BugPackContext.prototype.require = function(bugPackKeyString) {
 //-------------------------------------------------------------------------------
 // Private Methods
 //-------------------------------------------------------------------------------
+
+
+/**
+ * @private
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.autoload = function(callback) {
+    var _this = this;
+    if (!this.autoloaded) {
+        this.autoloaded             = true;
+        var registry                = this.getRegistry();
+        var registryEntries         = registry.getRegistryEntries();
+        var autoloadCount           = 0;
+        var autoloadCompletedCount  = 0;
+        var allEntriesProcessed     = false;
+        var autoloadComplete        = false;
+        registryEntries.forEach(function(registryEntry) {
+            if (registryEntry.getAutoload()) {
+                autoloadCount++;
+                var bugPackSource = registryEntry.getBugPackSource();
+                _this.processBugPackSource(bugPackSource, function(error) {
+                    if (!error) {
+                        autoloadCompletedCount++;
+                        if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
+                            autoloadComplete = true;
+                            callback();
+                        }
+                    } else {
+                        callback(error);
+                    }
+                });
+            }
+        });
+        allEntriesProcessed = true;
+        if (autoloadCompletedCount === autoloadCount && allEntriesProcessed && !autoloadComplete) {
+            autoloadComplete = true;
+            callback();
+        }
+    }
+};
+
+/**
+ * @private
+ */
+BugPackContext.prototype.autoloadSync = function() {
+    var _this = this;
+    if (!this.autoloaded) {
+        this.autoloaded         = true;
+        var registry            = this.getRegistry();
+        var registryEntries     = registry.getRegistryEntries();
+        registryEntries.forEach(function(registryEntry) {
+            if (registryEntry.getAutoload()) {
+                var bugPackSource = registryEntry.getBugPackSource();
+                _this.processBugPackSourceSync(bugPackSource);
+            }
+        });
+    }
+};
 
 /**
  * @private
@@ -335,6 +396,36 @@ BugPackContext.prototype.generateBugPackKey = function(bugPackKeyString) {
  */
 BugPackContext.prototype.hasProcessedSource = function(bugPackSource) {
     return !!this.processedSources[bugPackSource.getSourceFilePath()];
+};
+
+/**
+ * @private
+ * @param {BugPackSource} bugPackSource
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.loadBugPackSource = function(bugPackSource, callback) {
+    if (!bugPackSource.hasLoaded()) {
+        bugPackSource.addLoadCallback(callback);
+        if (!bugPackSource.hasLoadStarted()) {
+            this.bugPackApi.setCurrentContext(this);
+            bugPackSource.load();
+        }
+    } else {
+        callback();
+    }
+};
+
+/**
+ * @private
+ * @param {BugPackSource} bugPackSource
+ */
+BugPackContext.prototype.loadBugPackSourceSync = function(bugPackSource) {
+    if (!bugPackSource.hasLoaded()) {
+        if (!bugPackSource.hasLoadStarted()) {
+            this.bugPackApi.setCurrentContext(this);
+            bugPackSource.loadSync();
+        }
+    }
 };
 
 /**
@@ -378,12 +469,28 @@ BugPackContext.prototype.loadRegistrySync = function() {
  * @param {BugPackSource} bugPackSource
  * @param {function(Error=)} callback
  */
-BugPackContext.prototype.loadSource = function(bugPackSource, callback) {
-    if (!bugPackSource.hasLoaded()) {
-        if (!bugPackSource.hasLoadStarted() && !this.hasProcessedSource(bugPackSource)) {
-            this.processSource(bugPackSource, callback);
+BugPackContext.prototype.processBugPackSource = function(bugPackSource, callback) {
+    if (!this.hasProcessedSource(bugPackSource)) {
+        var _this               = this;
+        var registryEntry       = this.registry.getEntryBySourceFilePath(bugPackSource.getSourceFilePath());
+        var requiredExports     = registryEntry.getRequires();
+        this.processedSources[bugPackSource.getSourceFilePath()] = true;
+        if (requiredExports.length > 0) {
+            var loadedExportsCount = 0;
+            requiredExports.forEach(function(requiredExport) {
+                _this.processExport(requiredExport, function(error) {
+                    if (!error) {
+                        loadedExportsCount++;
+                        if (loadedExportsCount === requiredExports.length) {
+                            _this.loadBugPackSource(bugPackSource, callback);
+                        }
+                    } else {
+                        callback(error);
+                    }
+                });
+            });
         } else {
-            bugPackSource.addLoadCallback(callback);
+            this.loadBugPackSource(bugPackSource, callback);
         }
     } else {
         callback();
@@ -394,61 +501,62 @@ BugPackContext.prototype.loadSource = function(bugPackSource, callback) {
  * @private
  * @param {BugPackSource} bugPackSource
  */
-BugPackContext.prototype.loadSourceSync = function(bugPackSource) {
-    if (!bugPackSource.hasLoaded()) {
-        if (!bugPackSource.hasLoadStarted() && !this.hasProcessedSource(bugPackSource)) {
-            this.processSourceSync(bugPackSource);
+BugPackContext.prototype.processBugPackSourceSync = function(bugPackSource) {
+    if (!this.hasProcessedSource(bugPackSource)) {
+        var _this               = this;
+        var registryEntry       = this.registry.getEntryBySourceFilePath(bugPackSource.getSourceFilePath());
+        var requiredExports     = registryEntry.getRequires();
+        this.processedSources[bugPackSource.getSourceFilePath()] = true;
+        requiredExports.forEach(function(requiredExport) {
+            _this.processExportSync(requiredExport);
+        });
+        this.loadBugPackSourceSync(bugPackSource);
+    }
+};
+
+/**
+ * @private
+ * @param {string} bugPackKeyString
+ * @param {function(Error=)} callback
+ */
+BugPackContext.prototype.processExport = function(bugPackKeyString, callback) {
+    if (this.processingExportStack.indexOf(bugPackKeyString) !== -1) {
+        callback(new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
+            "load stack. " + JSON.stringify(this.processingExportStack)));
+    } else {
+        var bugPackKey      = this.generateBugPackKey(bugPackKeyString);
+        var registryEntry   = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
+        if (registryEntry) {
+            var bugPackSource   = registryEntry.getBugPackSource();
+            this.processingExportStack.push(bugPackKeyString);
+            this.processBugPackSource(bugPackSource, callback);
+            this.processingExportStack.pop();
+        } else {
+            callback(new Error("Cannot find registry entry '" + bugPackKeyString + "'"));
         }
     }
 };
 
 /**
  * @private
- * @param {BugPackSource} bugPackSource
- * @param {function(Error=)} callback
+ * @param {string} bugPackKeyString
  */
-BugPackContext.prototype.processSource = function(bugPackSource, callback) {
-    var _this = this;
-    this.processedSources[bugPackSource.getSourceFilePath()] = true;
-    var registryEntry = this.registry.getEntryBySourceFilePath(bugPackSource.getSourceFilePath());
-    var requiredExports = registryEntry.getRequires();
-    if (requiredExports.length > 0) {
-        var loadedExportsCount = 0;
-        requiredExports.forEach(function(requiredExport) {
-            _this.loadExport(requiredExport, function(error) {
-                if (!error) {
-                    loadedExportsCount++;
-                    if (loadedExportsCount === requiredExports.length) {
-                        _this.bugPackApi.setCurrentContext(_this);
-                        bugPackSource.addLoadCallback(callback);
-                        bugPackSource.load();
-                    }
-                } else {
-                    callback(error);
-                }
-            });
-        });
+BugPackContext.prototype.processExportSync = function(bugPackKeyString) {
+    if (this.processingExportStack.indexOf(bugPackKeyString) !== -1) {
+        throw new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
+            "load stack. " + JSON.stringify(this.processingExportStack));
     } else {
-        this.bugPackApi.setCurrentContext(this);
-        bugPackSource.addLoadCallback(callback);
-        bugPackSource.load();
+        var bugPackKey      = this.generateBugPackKey(bugPackKeyString);
+        var registryEntry   = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
+        if (registryEntry) {
+            var bugPackSource = registryEntry.getBugPackSource();
+            this.processingExportStack.push(bugPackKeyString);
+            this.processBugPackSourceSync(bugPackSource);
+            this.processingExportStack.pop();
+        } else {
+            throw new Error("Cannot find registry entry '" + bugPackKeyString + "'");
+        }
     }
-};
-
-/**
- * @private
- * @param {BugPackSource} bugPackSource
- */
-BugPackContext.prototype.processSourceSync = function(bugPackSource) {
-    var _this = this;
-    this.processedSources[bugPackSource.getSourceFilePath()] = true;
-    var registryEntry       = this.registry.getEntryBySourceFilePath(bugPackSource.getSourceFilePath());
-    var requiredExports     = registryEntry.getRequires();
-    requiredExports.forEach(function(requiredExport) {
-        _this.loadExportSync(requiredExport);
-    });
-    this.bugPackApi.setCurrentContext(this);
-    bugPackSource.loadSync();
 };
 
 /**
