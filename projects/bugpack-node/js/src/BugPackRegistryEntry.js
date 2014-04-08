@@ -37,7 +37,7 @@ var BugPackRegistryEntry = function(registryPath, registryEntryJson) {
      * @private
      * @type {string}
      */
-    this.sourceFilePath     = path.join(registryPath, this.path);
+    this.sourceFilePath     = path.resolve(path.join(registryPath, this.path));
 
     /**
      * @private

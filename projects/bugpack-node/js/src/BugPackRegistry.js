@@ -2,6 +2,8 @@
 // Requires
 //-------------------------------------------------------------------------------
 
+var path                    = require('path');
+
 var BugPackKey              = require('./BugPackKey');
 var BugPackRegistryEntry    = require('./BugPackRegistryEntry');
 var BugPackSource           = require('./BugPackSource');
@@ -131,6 +133,7 @@ BugPackRegistry.prototype.getEntryByPackageAndExport = function(packageName, exp
  * @return {BugPackRegistryEntry}
  */
 BugPackRegistry.prototype.getEntryBySourceFilePath = function(sourceFilePath) {
+    sourceFilePath = path.resolve(sourceFilePath);
     if (this.hasEntryForSourceFilePath(sourceFilePath)) {
         return this.sourceFilePathToRegistryEntryMap[sourceFilePath];
     }
