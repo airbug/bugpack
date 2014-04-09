@@ -205,7 +205,7 @@ BugPackContext.prototype.loadExports = function(bugPackKeyStrings, callback) {
             bugPackKeyStrings.forEach(function(bugPackKeyString) {
                 _this.loadExport(bugPackKeyString, function(returnedError) {
                     loadCount++;
-                    if (returnedError) {
+                    if (returnedError && !error) {
                         error = returnedError;
                     }
                     if (loadCount === expectedCount) {
@@ -278,7 +278,7 @@ BugPackContext.prototype.loadSources = function(sourceFilePaths, callback) {
             sourceFilePaths.forEach(function(sourceFilePath) {
                 _this.loadSource(sourceFilePath, function(returnedError) {
                     loadCount++;
-                    if (returnedError) {
+                    if (returnedError && !error) {
                         error = returnedError;
                     }
                     if (loadCount === expectedCount) {
