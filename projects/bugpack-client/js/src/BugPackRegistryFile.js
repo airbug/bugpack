@@ -24,7 +24,7 @@ BugPackRegistryFile.prototype.getRegistryPath = function() {
 };
 
 /**
- * @param {function(Error, Object)} callback
+ * @param {function(Error, Object=)} callback
  */
 BugPackRegistryFile.prototype.loadRegistryContents = function(callback) {
     var request = this.createXMLHttpRequest();

@@ -41,33 +41,12 @@ BugPackRegistry.prototype.getRegistryEntries = function() {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {Object} registryJson
+ * @param {BugPackRegistryFile} registryFile
+ * @param {Object} registryEntriesObject
  */
-BugPackRegistry.prototype.generate = function(registryFile, registryJson) {
-    var _this = this;
+BugPackRegistry.prototype.generate = function(registryFile, registryEntriesObject) {
     var registryPath = registryFile.getRegistryPath();
-    for (var key in registryJson) {
-        var registryEntry   = new BugPackRegistryEntry(registryPath, registryJson[key]);
-        var exports         = registryEntry.getExports();
-        var sourceFilePath  = registryEntry.getSourceFilePath();
-
-        if (_this.hasEntryForSourceFilePath(sourceFilePath)) {
-            throw new Error("The source file path '" + sourceFilePath + "' has already been registered");
-        }
-
-        _this.registryEntries.push(registryEntry);
-        _this.sourceFilePathToRegistryEntryMap[sourceFilePath] = registryEntry;
-
-        // NOTE BRN: export names are not required for exports. This can be useful when annotating files that are
-        // loaded more like scripts.
-
-        if (exports) {
-            exports.forEach(function(exportKey) {
-                var bugPackKey = this.generateBugPackKey(exportKey);
-                _this.mapExportName(bugPackKey.getPackageName(), bugPackKey.getExportName(), registryEntry);
-            });
-        }
-    }
+    this.processRegistryEntriesObject(registryPath, registryEntriesObject);
 };
 
 /**
@@ -148,4 +127,35 @@ BugPackRegistry.prototype.mapExportName = function(packageName, exportName, bugP
             exportName + "'");
     }
     this.registryKeyToRegistryEntryMap[registryKey] = bugPackRegistryEntry;
+};
+
+/**
+ * @private
+ * @param {string} registryPath
+ * @param {Object} registryEntriesObject
+ */
+BugPackRegistry.prototype.processRegistryEntriesObject = function(registryPath, registryEntriesObject) {
+    var _this = this;
+    for (var key in registryEntriesObject) {
+        var registryEntry   = new BugPackRegistryEntry(registryPath, registryEntriesObject[key]);
+        var exports         = registryEntry.getExports();
+        var sourceFilePath  = registryEntry.getSourceFilePath();
+
+        if (this.hasEntryForSourceFilePath(sourceFilePath)) {
+            throw new Error("The source file path '" + sourceFilePath + "' has already been registered");
+        }
+
+        this.registryEntries.push(registryEntry);
+        this.sourceFilePathToRegistryEntryMap[sourceFilePath] = registryEntry;
+
+        // NOTE BRN: export names are not required for exports. This can be useful when annotating files that are
+        // loaded more like scripts.
+
+        if (exports) {
+            exports.forEach(function(exportKey) {
+                var bugPackKey = _this.generateBugPackKey(exportKey);
+                _this.mapExportName(bugPackKey.getPackageName(), bugPackKey.getExportName(), registryEntry);
+            });
+        }
+    }
 };

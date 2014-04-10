@@ -47,7 +47,7 @@ BugPackSource.prototype.getSourceFilePath = function() {
 //-------------------------------------------------------------------------------
 
 /**
- * @param {function(event)}
+ * @param {function(Error=)} callback
  */
 BugPackSource.prototype.addLoadCallback = function(callback) {
     this.loadCallbacks.push(callback);
@@ -107,13 +107,9 @@ BugPackSource.prototype.loadSource = function() {
     scriptLoader.async = true;
     scriptLoader.src = this.sourceFilePath;
     scriptLoader.onload = function(event) {
-        //TEST
-        console.log("script load complete - this.sourceFilePath:" + _this.sourceFilePath);
         _this.loadComplete();
     };
     scriptLoader.onerror = function(event) {
-        //TEST
-        console.log("Error occurred in script loading - this.sourceFilePath:" + _this.sourceFilePath);
         _this.loadComplete(new Error("script loading failed."));
     };
     lastScript.parentNode.insertBefore(scriptLoader, lastScript.nextSibling);

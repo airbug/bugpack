@@ -34,7 +34,7 @@ var uglifyjs            = enableModule("uglifyjs");
 // Values
 //-------------------------------------------------------------------------------
 
-var version             = "0.1.6";
+var version             = "0.1.9";
 
 
 //-------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ var version             = "0.1.6";
 //-------------------------------------------------------------------------------
 
 buildProperties({
-    bugpackNode: {
+    node: {
         packageJson: {
             name: "bugpack",
             version: version,
@@ -68,7 +68,7 @@ buildProperties({
         ],
         readmePath: "./README.md"
     },
-    bugpackWeb: {
+    web: {
         name: "bugpack",
         version: version,
         sourcePaths: [
@@ -76,14 +76,15 @@ buildProperties({
             "./projects/bugpack-client/js/src/BugPackPackage.js",
             "./projects/bugpack-client/js/src/BugPackLibrary.js",
             "./projects/bugpack-client/js/src/BugPackSource.js",
+            "./projects/bugpack-client/js/src/BugPackSourceProcessor.js",
             "./projects/bugpack-client/js/src/BugPackRegistryEntry.js",
             "./projects/bugpack-client/js/src/BugPackRegistry.js",
             "./projects/bugpack-client/js/src/BugPackRegistryFile.js",
             "./projects/bugpack-client/js/src/BugPackContext.js",
             "./projects/bugpack-client/js/src/BugPackApi.js"
         ],
-        outputFile: "{{distPath}}/{{bugpackWeb.name}}-{{bugpackWeb.version}}.js",
-        outputMinFile: "{{distPath}}/{{bugpackWeb.name}}-{{bugpackWeb.version}}.min.js"
+        outputFile: "{{distPath}}/{{web.name}}-{{web.version}}.js",
+        outputMinFile: "{{distPath}}/{{web.name}}-{{web.version}}.min.js"
     }
 });
 
@@ -112,21 +113,21 @@ buildTarget("local").buildFlow(
             series([
                 targetTask("createNodePackage", {
                     properties: {
-                        packageJson: buildProject.getProperty("bugpackNode.packageJson"),
-                        readmePath: buildProject.getProperty("bugpackNode.readmePath"),
-                        sourcePaths: buildProject.getProperty("bugpackNode.sourcePaths")
+                        packageJson: buildProject.getProperty("node.packageJson"),
+                        readmePath: buildProject.getProperty("node.readmePath"),
+                        sourcePaths: buildProject.getProperty("node.sourcePaths")
                     }
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: "{{bugpackNode.packageJson.name}}",
-                        packageVersion: "{{bugpackNode.packageJson.version}}"
+                        packageName: "{{node.packageJson.name}}",
+                        packageVersion: "{{node.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
                     init: function(task, buildProject, properties) {
-                        var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperty("bugpackNode.packageJson.name"),
-                            buildProject.getProperty("bugpackNode.packageJson.version"));
+                        var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperty("node.packageJson.name"),
+                            buildProject.getProperty("node.packageJson.version"));
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
@@ -143,14 +144,14 @@ buildTarget("local").buildFlow(
             series([
                 targetTask("concat", {
                     properties: {
-                        sources: buildProject.getProperty("bugpackWeb.sourcePaths"),
-                        outputFile: "{{bugpackWeb.outputFile}}"
+                        sources: buildProject.getProperty("web.sourcePaths"),
+                        outputFile: "{{web.outputFile}}"
                     }
                 }),
                 parallel([
                     targetTask("s3PutFile", {
                         properties: {
-                            file:  "{{bugpackWeb.outputFile}}",
+                            file:  "{{web.outputFile}}",
                             options: {
                                 acl: 'public-read',
                                 gzip: true
@@ -161,13 +162,13 @@ buildTarget("local").buildFlow(
                     series([
                         targetTask("uglifyjsMinify", {
                             properties: {
-                                sources: ["{{bugpackWeb.outputFile}}"],
-                                outputFile: "{{bugpackWeb.outputMinFile}}"
+                                sources: ["{{web.outputFile}}"],
+                                outputFile: "{{web.outputMinFile}}"
                             }
                         }),
                         targetTask("s3PutFile", {
                             properties: {
-                                file:  "{{bugpackWeb.outputMinFile}}",
+                                file:  "{{web.outputMinFile}}",
                                 options: {
                                     acl: 'public-read',
                                     gzip: true
@@ -193,21 +194,21 @@ buildTarget("prod").buildFlow(
             series([
                 targetTask("createNodePackage", {
                     properties: {
-                        packageJson: buildProject.getProperty("bugpackNode.packageJson"),
-                        readmePath: buildProject.getProperty("bugpackNode.readmePath"),
-                        sourcePaths: buildProject.getProperty("bugpackNode.sourcePaths")
+                        packageJson: buildProject.getProperty("node.packageJson"),
+                        readmePath: buildProject.getProperty("node.readmePath"),
+                        sourcePaths: buildProject.getProperty("node.sourcePaths")
                     }
                 }),
                 targetTask("packNodePackage", {
                     properties: {
-                        packageName: "{{bugpackNode.packageJson.name}}",
-                        packageVersion: "{{bugpackNode.packageJson.version}}"
+                        packageName: "{{node.packageJson.name}}",
+                        packageVersion: "{{node.packageJson.version}}"
                     }
                 }),
                 targetTask("s3PutFile", {
                     init: function(task, buildProject, properties) {
-                        var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperty("bugpackNode.packageJson.name"),
-                            buildProject.getProperty("bugpackNode.packageJson.version"));
+                        var packedNodePackage = nodejs.findPackedNodePackage(buildProject.getProperty("node.packageJson.name"),
+                            buildProject.getProperty("node.packageJson.version"));
                         task.updateProperties({
                             file: packedNodePackage.getFilePath(),
                             options: {
@@ -217,7 +218,7 @@ buildTarget("prod").buildFlow(
                         });
                     },
                     properties: {
-                        bucket: "{{prod-deploy-bucket}}"
+                        bucket: "{{public-bucket}}"
                     }
                 }),
                 targetTask('npmConfigSet', {
@@ -228,44 +229,44 @@ buildTarget("prod").buildFlow(
                 targetTask('npmAddUser'),
                 targetTask('publishNodePackage', {
                     properties: {
-                        packageName: "{{bugpackNode.packageJson.name}}",
-                        packageVersion: "{{bugpackNode.packageJson.version}}"
+                        packageName: "{{node.packageJson.name}}",
+                        packageVersion: "{{node.packageJson.version}}"
                     }
                 })
             ]),
             series([
                 targetTask("concat", {
                     properties: {
-                        sources: buildProject.getProperty("bugpackWeb.sourcePaths"),
-                        outputFile: "{{bugpackWeb.outputFile}}"
+                        sources: buildProject.getProperty("web.sourcePaths"),
+                        outputFile: "{{web.outputFile}}"
                     }
                 }),
                 parallel([
                     targetTask("s3PutFile", {
                         properties: {
-                            file:  "{{bugpackWeb.outputFile}}",
+                            file:  "{{web.outputFile}}",
                             options: {
                                 acl: 'public-read',
                                 gzip: true
                             },
-                            bucket: "{{prod-deploy-bucket}}"
+                            bucket: "{{public-bucket}}"
                         }
                     }),
                     series([
                         targetTask("uglifyjsMinify", {
                             properties: {
-                                sources: ["{{bugpackWeb.outputFile}}"],
-                                outputFile: "{{bugpackWeb.outputMinFile}}"
+                                sources: ["{{web.outputFile}}"],
+                                outputFile: "{{web.outputMinFile}}"
                             }
                         }),
                         targetTask("s3PutFile", {
                             properties: {
-                                file:  "{{bugpackWeb.outputMinFile}}",
+                                file:  "{{web.outputMinFile}}",
                                 options: {
                                     acl: 'public-read',
                                     gzip: true
                                 },
-                                bucket: "{{prod-deploy-bucket}}"
+                                bucket: "{{public-bucket}}"
                             }
                         })
                     ])
@@ -274,4 +275,3 @@ buildTarget("prod").buildFlow(
         ])
     ])
 );
-

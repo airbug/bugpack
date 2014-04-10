@@ -53,7 +53,7 @@ BugPackApi.context = function(contextQuery, contextFunction) {
             throw new Error("No context loaded for '" + contextQuery + "'");
         }
     } else if (!BugPackApi.currentContext) {
-        BugPackApi.setCurrentContext(BugPackApi.generateContext("default"));
+        BugPackApi.setCurrentContext(BugPackApi.generateContext("*"));
     }
     if (contextFunction) {
         contextFunction(BugPackApi.currentContext);
