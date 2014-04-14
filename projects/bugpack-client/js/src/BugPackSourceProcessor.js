@@ -118,11 +118,13 @@ BugPackSourceProcessor.prototype.loadBugPackSource = function() {
  * @param {Error=} error
  */
 BugPackSourceProcessor.prototype.processingComplete = function(error) {
-    this.processed = true;
-    this.processedCallbacks.forEach(function(processedCallback) {
-        processedCallback(error);
-    });
-    this.processedCallbacks = [];
+    if (!this.processed) {
+        this.processed = true;
+        this.processedCallbacks.forEach(function (processedCallback) {
+            processedCallback(error);
+        });
+        this.processedCallbacks = [];
+    }
 };
 
 /**
@@ -142,7 +144,7 @@ BugPackSourceProcessor.prototype.processSource = function() {
                         _this.loadBugPackSource();
                     }
                 } else {
-                    callback(error);
+                    _this.processingComplete(error);
                 }
             });
         });

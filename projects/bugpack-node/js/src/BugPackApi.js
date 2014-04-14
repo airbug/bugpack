@@ -65,6 +65,7 @@ BugPackApi.context = function(contextQuery, contextFunction) {
         if (foundContext) {
             BugPackApi.setCurrentContext(foundContext);
         } else {
+            Error.stackTraceLimit = Infinity;
             throw new Error("No context loaded for '" + contextQuery + "'");
         }
     } else if (!BugPackApi.currentContext) {

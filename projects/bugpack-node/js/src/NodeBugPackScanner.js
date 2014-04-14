@@ -54,6 +54,7 @@ NodeBugPackScanner.prototype.discoverRegistryFiles = function() {
     if (PathUtil.isDirectorySync(this.moduleTopDir)) {
         return this.findRegistryFiles(this.moduleTopDir);
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Path '" + this.moduleTopDir + "' is not a directory.");
     }
 };

@@ -123,9 +123,11 @@ BugPackContext.prototype.getRegistry = function() {
  */
 BugPackContext.prototype.export = function(bugPackKeyString, bugPackExport) {
     if (!bugPackKeyString) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Expected string for 'bugPackKeyString' instead found ", bugPackKeyString);
     }
     if (!bugPackExport) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Expected object or function for 'bugPackExport' instead found ", bugPackExport);
     }
     var bugPackKey = this.factoryBugPackKey(bugPackKeyString);
@@ -166,6 +168,7 @@ BugPackContext.prototype.loadContext = function(callback) {
             }
         });
     } else {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("Context already loaded"));
     }
 };
@@ -180,6 +183,7 @@ BugPackContext.prototype.loadContextSync = function() {
         this.bugPackApi.setCurrentContext(this);
         this.autoloadSync();
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Context already loaded");
     }
 };
@@ -195,6 +199,7 @@ BugPackContext.prototype.loadExport = function(bugPackKeyString, callback) {
         var bugPackSource = registryEntry.getBugPackSource();
         this.processBugPackSource(bugPackSource, callback);
     } else {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("Cannot find registry entry '" + bugPackKeyString + "'"));
     }
 };
@@ -209,6 +214,7 @@ BugPackContext.prototype.loadExportSync = function(bugPackKeyString) {
         var bugPackSource = registryEntry.getBugPackSource();
         this.processBugPackSourceSync(bugPackSource);
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Cannot find registry entry '" + bugPackKeyString + "'");
     }
 };
@@ -240,6 +246,7 @@ BugPackContext.prototype.loadExports = function(bugPackKeyStrings, callback) {
             callback();
         }
     } else {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("bugPackKeyStrings must be an Array"));
     }
 };
@@ -255,6 +262,7 @@ BugPackContext.prototype.loadExportsSync = function(bugPackKeyStrings, callback)
             _this.loadExportSync(bugPackKeyString);
         });
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("bugPackKeyStrings must be an Array");
     }
 };
@@ -269,6 +277,7 @@ BugPackContext.prototype.loadSource = function(sourceFilePath, callback) {
         var bugPackSource = registryEntry.getBugPackSource();
         this.processBugPackSource(bugPackSource, callback);
     } else {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("Cannot find registry entry for source file '" + sourceFilePath + "'"));
     }
 };
@@ -282,6 +291,7 @@ BugPackContext.prototype.loadSourceSync = function(sourceFilePath) {
         var bugPackSource = registryEntry.getBugPackSource();
         this.processBugPackSourceSync(bugPackSource);
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Cannot find registry entry for source file '" + sourceFilePath + "'");
     }
 };
@@ -313,6 +323,7 @@ BugPackContext.prototype.loadSources = function(sourceFilePaths, callback) {
             callback();
         }
     } else {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("sourceFilePaths must be an Array"));
     }
 };
@@ -328,6 +339,7 @@ BugPackContext.prototype.loadSourcesSync = function(sourceFilePaths, callback) {
             _this.loadSourceSync(sourceFilePath);
         });
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("sourceFilePaths must be an Array");
     }
 };
@@ -352,6 +364,7 @@ BugPackContext.prototype.require = function(bugPackKeyString) {
  */
 BugPackContext.prototype.processExport = function(bugPackKeyString, callback) {
     if (this.processingExportStack.indexOf(bugPackKeyString) !== -1) {
+        Error.stackTraceLimit = Infinity;
         callback(new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
             "load stack. " + JSON.stringify(this.processingExportStack)));
     } else {
@@ -363,6 +376,7 @@ BugPackContext.prototype.processExport = function(bugPackKeyString, callback) {
             this.processBugPackSource(bugPackSource, callback);
             this.processingExportStack.pop();
         } else {
+            Error.stackTraceLimit = Infinity;
             callback(new Error("Cannot find registry entry '" + bugPackKeyString + "'"));
         }
     }
@@ -374,6 +388,7 @@ BugPackContext.prototype.processExport = function(bugPackKeyString, callback) {
  */
 BugPackContext.prototype.processExportSync = function(bugPackKeyString) {
     if (this.processingExportStack.indexOf(bugPackKeyString) !== -1) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Circular dependency in load calls. Requiring '" + bugPackKeyString + "' which is already in the " +
             "load stack. " + JSON.stringify(this.processingExportStack));
     } else {
@@ -385,6 +400,7 @@ BugPackContext.prototype.processExportSync = function(bugPackKeyString) {
             this.processBugPackSourceSync(bugPackSource);
             this.processingExportStack.pop();
         } else {
+            Error.stackTraceLimit = Infinity;
             throw new Error("Cannot find registry entry '" + bugPackKeyString + "'");
         }
     }
@@ -481,6 +497,7 @@ BugPackContext.prototype.loadRegistry = function(callback) {
                 registryFiles.push(new BugPackRegistryFile(bugpackRegistryPath));
                 _this.registry.generate(registryFiles, callback);
             } else {
+                Error.stackTraceLimit = Infinity;
                 callback(new Error("Cannot find bugpack-registry.json file"));
             }
         } else {
@@ -499,6 +516,7 @@ BugPackContext.prototype.loadRegistrySync = function() {
         registryFiles.push(new BugPackRegistryFile(bugpackRegistryPath));
         this.registry.generateSync(registryFiles);
     } else {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Cannot find bugpack-registry.json file");
     }
 };
@@ -577,6 +595,7 @@ BugPackContext.prototype.requireExport = function(bugPackKey) {
     var exportObject = undefined;
 
     if (this.requireStack.indexOf(key) !== -1) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Circular dependency in require calls. Requiring '" + key + "' which is already in the " +
             "require stack. " + JSON.stringify(this.requireStack));
     }
@@ -596,12 +615,15 @@ BugPackContext.prototype.requireExport = function(bugPackKey) {
             var registryEntry = this.registry.getEntryByPackageAndExport(bugPackKey.getPackageName(), bugPackKey.getExportName());
             var bugPackSource = registryEntry.getBugPackSource();
             if (bugPackSource.hasLoaded()) {
+                Error.stackTraceLimit = Infinity;
                 throw new Error("Export found and it was loaded but nothing was exported. Ensure that '" + key + "' actually exports something by that name.");
             } else {
+                Error.stackTraceLimit = Infinity;
                 throw new Error("Export found but has not been loaded. Must first load '" + key +
                     "' before requiring it.");
             }
         } else {
+            Error.stackTraceLimit = Infinity;
             throw new Error("Cannot find export '" + exportName + "' in package '" + packageName + "' and no " +
                 "source has been registered for this export");
         }

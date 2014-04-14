@@ -116,6 +116,7 @@ BugPackRegistryEntry.prototype.getRequires = function() {
  */
 BugPackRegistryEntry.prototype.validate = function(registryEntryJson) {
     if (!registryEntryJson.path) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Path is required for registry entries. " + JSON.stringify(registryEntryJson));
     }
 

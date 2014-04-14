@@ -173,6 +173,7 @@ BugPackRegistry.prototype.generateRegistryKey = function(packageName, exportName
 BugPackRegistry.prototype.mapExportName = function(packageName, exportName, bugPackRegistryEntry) {
     var registryKey = this.generateRegistryKey(packageName, exportName);
     if (this.hasEntryForExport(packageName, exportName)) {
+        Error.stackTraceLimit = Infinity;
         throw new Error("Package '" + packageName + "' already has a registry entry registered for export '" +
             exportName + "'");
     }
@@ -192,6 +193,7 @@ BugPackRegistry.prototype.processRegistryEntriesObject = function(registryPath, 
         var sourceFilePath  = registryEntry.getSourceFilePath();
 
         if (this.hasEntryForSourceFilePath(sourceFilePath)) {
+            Error.stackTraceLimit = Infinity;
             throw new Error("The source file path '" + sourceFilePath + "' has already been registered");
         }
 
