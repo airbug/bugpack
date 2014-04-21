@@ -34,7 +34,7 @@ var uglifyjs            = enableModule("uglifyjs");
 // Values
 //-------------------------------------------------------------------------------
 
-var version             = "0.1.11";
+var version             = "0.1.12";
 
 
 //-------------------------------------------------------------------------------
@@ -247,7 +247,8 @@ buildTarget("prod").buildFlow(
                             file:  "{{web.outputFile}}",
                             options: {
                                 acl: 'public-read',
-                                gzip: true
+                                gzip: true,
+                                cacheControl: "max-age=31536000, public"
                             },
                             bucket: "{{public-bucket}}"
                         }
@@ -264,7 +265,8 @@ buildTarget("prod").buildFlow(
                                 file:  "{{web.outputMinFile}}",
                                 options: {
                                     acl: 'public-read',
-                                    gzip: true
+                                    gzip: true,
+                                    cacheControl: "max-age=31536000, public"
                                 },
                                 bucket: "{{public-bucket}}"
                             }
