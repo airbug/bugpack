@@ -136,7 +136,7 @@ BugPackPackage.prototype.markExport = function(exportName, bugPackExport) {
                 value : {
                     packageName: this.name,
                     exportName: exportName,
-                    bugPackKey: this.name + "." + exportName
+                    bugPackKey: this.name ? this.name + "." + exportName : exportName
                 },
                 writable : false,
                 enumerable : false,

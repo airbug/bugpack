@@ -14,6 +14,11 @@ to offer. If the library is missing something you need, please let us know!
 
 Latest Version `0.1.11`
 
+NOTE: This documentation is still being written. If you click on a link and it
+doesn't go anywhere, it's likely because that portion of the docs hasn't been
+written yet. If there are parts of the docs you'd like us to focus on, feel
+free to ask!
+
 
 ## Quick Examples
 
@@ -30,18 +35,28 @@ bugpack.export('MyExportName', MyExport);
 var MyExport = bugpack.require('MyExportName');    // MyExport
 ```
 
-## Download
+
+## Download Source
 
 The source is available for download from [GitHub](https://github.com/airbug/bugpack)
+
+For the web, you can download the packaged scripts here
+
+    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.js
+    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.min.js
+
+
+## Install
 
 For node js, you can install using Node Package Manager [npm](https://www.npmjs.org/package/bugpack)
 
     npm install bugpack
 
-For the web, you can access the scripts here
+For the web, simply include this script in your application
 
-    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.js
-    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.min.js
+```html
+<script type="text/javascript" src="https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.min.js"></script>
+```
 
 
 ## Usage
@@ -66,3 +81,78 @@ var SomePackage = bugpack.require('SomePackage');
 
 </script>
 ```
+
+
+## Documentation
+
+### Overview
+
+* [`Getting Started`](#GettingStarted)
+
+### BugPack Registry
+
+* [`Creating Registry`](#CreatingRegistry)
+* [`Where to Put Registry`](#WhereToPutRegistry)
+* [`Loading Registry`](#LoadingRegistry)
+
+### BugPack System
+* [`BugPackApi`](#BugPackApi)
+* [`BugPackContext`](#BugPackContext)
+
+
+<br /><a name="GettingStarted" />
+## Getting Started
+
+__Generate bugpack-registry.json file__
+
+bugpack-registry.json files are what tell the bugpack system the names of all the available exports
+and where they can be found. Registry files should generated and placed at the root of either a node
+module (for node js) or a base url (for the web). Registry files use relative paths to point the bugpack
+system at files. So once the registry file is generated it should stay at the same relative point as
+the files that the registry points to...
+
+
+__Example__
+
+I have JS files that have bugpack annotations located at...
+```
+/my/path/myfile.js
+/my/path/somedir/myotherfile.js
+```
+
+I decide to generate my registry at
+```
+/my/path
+```
+
+So that the registry now lives at..
+```
+/my/path/bugpack-registry.json
+```
+
+As long as the registry file and the JS files remain relative to one another the system will work.
+
+e.g.
+I can move all the contents of `/my/path/` to `/my/elsewhere/`
+
+So the files are now
+```
+/my/elsewhere/myfile.js
+/my/elsewhere/somedir/myotherfile.js
+/my/elsewhere/bugpack-registry.json
+```
+
+The registry file is still in the same relative path to the JS files, so it will work..
+
+However, you could not just move the contents of `/my/path/somedir/` to `/my/path/someotherdir/`
+
+So the files are now
+```
+/my/path/myfile.js
+/my/path/someotherdir/myotherfile.js
+/my/path/bugpack-registry.json
+```
+
+This would prevent the bugpack system from correctly knowing where the myotherfile.js is located.
+
+When these breaking changes are made, you will need to regenerate the bugpack-registry.json file
