@@ -46,7 +46,7 @@ buildProperties({
         packageJson: {
             name: "bugpack",
             version: version,
-            description: "Package loader to help make browser and node js package loading consistent",
+            description: "Package manager and loader to help make browser and node js package loading consistent and easier",
             main: "./lib/BugPackApi.js",
             author: "Brian Neisler <brian@airbug.com>",
             repository: {

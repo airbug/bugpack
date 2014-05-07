@@ -1,18 +1,20 @@
 # bugpack
 
-bugpack is a JavaScript class and package loader that helps make browser and
-node js package loading consistent. It is designed to work both within node
-js as well as directly in the browser.
+bugpack is a JavaScript package loader that helps make browser and node js package
+loading consistent. It is designed to work both within node js as well as directly
+in the browser.
 
-bugpack provides a simple package loading mechanism that depends upon a
+bugpack provides a simple name base package loading mechanism that depends upon a
 pre-generated registry called bugpack-registry.json. These files can be
-produced using the [bugpack-registry](https://github.com/airbug/bugpack-registry) project.
+produced using the [bugpack-registry](https://github.com/airbug/bugpack-registry)
+project. Name based loading makes it very simple to export and require packages
+without having to update all of your requires every time you move a file.
 
 The library makes up part of the foundation of our architecture for [airbug](http://airbug.com)
 so check out the docs for an overview of the full power of what the code has
 to offer. If the library is missing something you need, please let us know!
 
-Latest Version `0.1.11`
+Latest Version `0.1.12`
 
 NOTE: This documentation is still being written. If you click on a link and it
 doesn't go anywhere, it's likely because that portion of the docs hasn't been
@@ -42,8 +44,8 @@ The source is available for download from [GitHub](https://github.com/airbug/bug
 
 For the web, you can download the packaged scripts here
 
-    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.js
-    https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.min.js
+    https://s3.amazonaws.com/public-airbug/bugpack-0.1.12.js
+    https://s3.amazonaws.com/public-airbug/bugpack-0.1.12.min.js
 
 
 ## Install
@@ -55,7 +57,7 @@ For node js, you can install using Node Package Manager [npm](https://www.npmjs.
 For the web, simply include this script in your application
 
 ```html
-<script type="text/javascript" src="https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.min.js"></script>
+<script type="text/javascript" src="https://s3.amazonaws.com/public-airbug/bugpack-0.1.12.min.js"></script>
 ```
 
 
@@ -72,7 +74,7 @@ var SomePackage = bugpack.require('SomePackage');
 In the browser:
 
 ```html
-<script type="text/javascript" src="https://s3.amazonaws.com/public-airbug/bugpack-0.1.11.js"></script>
+<script type="text/javascript" src="https://s3.amazonaws.com/public-airbug/bugpack-0.1.12.js"></script>
 <script type="text/javascript">
 
 var bugpack = require('bugpack');
