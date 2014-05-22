@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2014 airbug inc. http://airbug.com
+ *
+ * bugpack may be freely distributed under the MIT license.
+ */
+
+
 //NOTE BRN: This file is no longer used.
 
 //-------------------------------------------------------------------------------
