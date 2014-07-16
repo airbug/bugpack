@@ -43,7 +43,7 @@ var uglifyjs            = enableModule("uglifyjs");
 // Values
 //-------------------------------------------------------------------------------
 
-var version             = "0.1.13";
+var version             = "0.1.14";
 
 
 //-------------------------------------------------------------------------------
@@ -148,8 +148,10 @@ buildTarget("local").buildFlow(
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("node.packageJson"),
-                        readmePath: buildProject.getProperty("node.readmePath"),
-                        sourcePaths: buildProject.getProperty("node.sourcePaths")
+                        packagePaths: {
+                            "./": [buildProject.getProperty("node.readmePath")],
+                            "./lib": buildProject.getProperty("node.sourcePaths")
+                        }
                     }
                 }),
                 targetTask("packNodePackage", {
@@ -243,8 +245,10 @@ buildTarget("prod").buildFlow(
                 targetTask("createNodePackage", {
                     properties: {
                         packageJson: buildProject.getProperty("node.packageJson"),
-                        readmePath: buildProject.getProperty("node.readmePath"),
-                        sourcePaths: buildProject.getProperty("node.sourcePaths")
+                        packagePaths: {
+                            "./": [buildProject.getProperty("node.readmePath")],
+                            "./lib": buildProject.getProperty("node.sourcePaths")
+                        }
                     }
                 }),
                 targetTask("packNodePackage", {
