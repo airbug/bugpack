@@ -43,6 +43,7 @@ var uglifyjs            = enableModule("uglifyjs");
 // Values
 //-------------------------------------------------------------------------------
 
+var name                = "bugpack";
 var version             = "0.1.14";
 
 
@@ -51,10 +52,15 @@ var version             = "0.1.14";
 //-------------------------------------------------------------------------------
 
 buildProperties({
+    name: name,
+    version: version
+});
+
+buildProperties({
     node: {
         packageJson: {
-            name: "bugpack",
-            version: version,
+            name: "{{name}}",
+            version: "{{version}}",
             description: "Package manager and loader to help make browser and node js package loading consistent and easier",
             main: "./lib/BugPackApi.js",
             author: "Brian Neisler <brian@airbug.com>",
@@ -78,8 +84,8 @@ buildProperties({
         readmePath: "./README.md"
     },
     web: {
-        name: "bugpack",
-        version: version,
+        name: "{{name}}",
+        version: "{{version}}",
         sourcePaths: [
             "./projects/bugpack-client/js/src/BugPackKey.js",
             "./projects/bugpack-client/js/src/BugPackPackage.js",
