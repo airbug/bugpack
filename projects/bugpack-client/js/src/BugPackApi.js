@@ -6,143 +6,171 @@
 
 
 //-------------------------------------------------------------------------------
-// Declare Class
+// Context
 //-------------------------------------------------------------------------------
 
-var BugPackApi = {};
+require('./BugPackFix').fix(module, "./BugPackApi", function(module) {
+
+    //-------------------------------------------------------------------------------
+    // Requires
+    //-------------------------------------------------------------------------------
+
+    var BugPackContext  = require('./BugPackContext');
 
 
-//-------------------------------------------------------------------------------
-// Static Properties
-//-------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------
+    // Declare Class
+    //-------------------------------------------------------------------------------
 
-/**
- * @private
- * @type {BugPackContext}
- */
-BugPackApi.currentContext               = null;
-
-/**
- * @private
- * @type {Object}
- */
-BugPackApi.contextUrlToBugPackContext   = {};
+    /**
+     * @constructor
+     */
+    var BugPackApi = function() {};
 
 
-//-------------------------------------------------------------------------------
-// Static Getters and Setters
-//-------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------
+    // Static Properties
+    //-------------------------------------------------------------------------------
 
-/**
- * @param {BugPackContext} context
- */
-BugPackApi.setCurrentContext = function(context) {
-    BugPackApi.currentContext = context;
-};
+    /**
+     * @private
+     * @type {BugPackContext}
+     */
+    BugPackApi.currentContext               = null;
+
+    /**
+     * @private
+     * @type {Object}
+     */
+    BugPackApi.contextUrlToBugPackContext   = {};
 
 
-//-------------------------------------------------------------------------------
-// Static Methods
-//-------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------
+    // Static Getters and Setters
+    //-------------------------------------------------------------------------------
 
-/**
- * @static
- * @param {string} contextQuery
- * @param {function(BugPackContext)=} contextFunction
- * @return {BugPackContext}
- */
-BugPackApi.context = function(contextQuery, contextFunction) {
-    if (contextQuery && contextQuery !== "*") {
-        var foundContext = BugPackApi.getContext(contextQuery);
-        if (foundContext) {
-            BugPackApi.setCurrentContext(foundContext);
-        } else {
-            throw new Error("No context loaded for '" + contextQuery + "'");
-        }
-    } else if (!BugPackApi.currentContext) {
-        BugPackApi.setCurrentContext(BugPackApi.generateContext("*"));
-    }
-    if (contextFunction) {
-        contextFunction(BugPackApi.currentContext);
-    }
-    return BugPackApi.currentContext;
-};
+    /**
+     * @param {BugPackContext} context
+     */
+    BugPackApi.setCurrentContext = function(context) {
+        BugPackApi.currentContext = context;
+    };
 
-/**
- * @static
- * @param {string} contextUrl
- * @param {function(Error, BugPackContext=)} callback
- */
-BugPackApi.loadContext = function(contextUrl, callback) {
-    if (!BugPackApi.hasContext(contextUrl)) {
 
-        //TODO BRN: This check is temporary until we can figure out how to support multiple contexts on the client side
-        if (BugPackApi.currentContext) {
-            callback(new Error("Can only support loading of one context for the time being"));
-        }
+    //-------------------------------------------------------------------------------
+    // Static Methods
+    //-------------------------------------------------------------------------------
 
-        var context = BugPackApi.generateContext(contextUrl);
-        context.loadContext(function(error) {
-            if (!error) {
-                callback(null, context);
+    /**
+     * @static
+     * @param {string} contextQuery
+     * @param {function(BugPackContext)=} contextFunction
+     * @return {BugPackContext}
+     */
+    BugPackApi.context = function(contextQuery, contextFunction) {
+        if (contextQuery && contextQuery !== "*") {
+            var foundContext = BugPackApi.getContext(contextQuery);
+            if (foundContext) {
+                BugPackApi.setCurrentContext(foundContext);
             } else {
-                callback(error);
+                throw new Error("No context loaded for '" + contextQuery + "'");
             }
-        });
-    } else {
-        callback(null, BugPackApi.getContext(contextUrl));
-    }
-};
+        } else if (!BugPackApi.currentContext) {
+            BugPackApi.setCurrentContext(BugPackApi.generateContext("*"));
+        }
+        if (contextFunction) {
+            contextFunction(BugPackApi.currentContext);
+        }
+        return BugPackApi.currentContext;
+    };
+
+    /**
+     * @static
+     * @param {string} contextUrl
+     * @param {function(Error, BugPackContext=)} callback
+     */
+    BugPackApi.loadContext = function(contextUrl, callback) {
+        if (!BugPackApi.hasContext(contextUrl)) {
+
+            //TODO BRN: This check is temporary until we can figure out how to support multiple contexts on the client side
+            if (BugPackApi.currentContext) {
+                callback(new Error("Can only support loading of one context for the time being"));
+            }
+
+            var context = BugPackApi.generateContext(contextUrl);
+            context.loadContext(function(error) {
+                if (!error) {
+                    callback(null, context);
+                } else {
+                    callback(error);
+                }
+            });
+        } else {
+            callback(null, BugPackApi.getContext(contextUrl));
+        }
+    };
 
 
-//-------------------------------------------------------------------------------
-// Private Static Methods
-//-------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------
+    // Private Static Methods
+    //-------------------------------------------------------------------------------
 
-/**
- * @static
- * @private
- * @param {string} contextUrl
- * @return {BugPackContext}
- */
-BugPackApi.generateContext = function(contextUrl) {
-    var context = BugPackApi.getContext(contextUrl);
-    if (!context) {
-        context = new BugPackContext(contextUrl, BugPackApi);
-        BugPackApi.putContext(contextUrl, context);
-    }
-    return context;
-};
+    /**
+     * @static
+     * @private
+     * @param {string} contextUrl
+     * @return {BugPackContext}
+     */
+    BugPackApi.generateContext = function(contextUrl) {
+        var context = BugPackApi.getContext(contextUrl);
+        if (!context) {
+            context = new BugPackContext(contextUrl, BugPackApi);
+            BugPackApi.putContext(contextUrl, context);
+        }
+        return context;
+    };
 
-/**
- * @static
- * @private
- * @param {string} contextUrl
- * @return {BugPackContext}
- */
-BugPackApi.getContext = function(contextUrl) {
-    if (BugPackApi.hasContext(contextUrl)) {
-        return BugPackApi.contextUrlToBugPackContext[contextUrl];
-    }
-    return null;
-};
+    /**
+     * @static
+     * @private
+     * @param {string} contextUrl
+     * @return {BugPackContext}
+     */
+    BugPackApi.getContext = function(contextUrl) {
+        if (BugPackApi.hasContext(contextUrl)) {
+            return BugPackApi.contextUrlToBugPackContext[contextUrl];
+        }
+        return null;
+    };
 
-/**
- * @static
- * @private
- * @param {string} contextUrl
- * @return {boolean}
- */
-BugPackApi.hasContext = function(contextUrl) {
-    return Object.prototype.hasOwnProperty.call(BugPackApi.contextUrlToBugPackContext, contextUrl);
-};
+    /**
+     * @static
+     * @private
+     * @param {string} contextUrl
+     * @return {boolean}
+     */
+    BugPackApi.hasContext = function(contextUrl) {
+        return Object.prototype.hasOwnProperty.call(BugPackApi.contextUrlToBugPackContext, contextUrl);
+    };
 
-/**
- * @static
- * @private
- * @param {string} contextUrl
- * @param {BugPackContext} context
- */
-BugPackApi.putContext = function(contextUrl, context) {
-    BugPackApi.contextUrlToBugPackContext[contextUrl] = context;
-};
+    /**
+     * @static
+     * @private
+     * @param {string} contextUrl
+     * @param {BugPackContext} context
+     */
+    BugPackApi.putContext = function(contextUrl, context) {
+        BugPackApi.contextUrlToBugPackContext[contextUrl] = context;
+    };
+
+
+    //-------------------------------------------------------------------------------
+    // Exports
+    //-------------------------------------------------------------------------------
+
+    module.exports = BugPackApi;
+
+    //TODO BRN: This is pretty hacky. Fix this...
+
+    require.modules["bugpack"] = BugPackApi;
+});

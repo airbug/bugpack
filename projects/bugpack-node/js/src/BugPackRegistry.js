@@ -25,6 +25,10 @@ var BugPackSource           = require('./BugPackSource');
  */
 var BugPackRegistry = function() {
 
+    //-------------------------------------------------------------------------------
+    // Private Properties
+    //-------------------------------------------------------------------------------
+
     /**
      * @private
      * @type {Object}

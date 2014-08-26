@@ -15,7 +15,7 @@ require('./BugPackFix').fix(module, "./BugPackLibrary", function(module) {
     // Requires
     //-------------------------------------------------------------------------------
 
-    var BugPackPackage = require('./BugPackPackage');
+    var BugPackPackage  = require('./BugPackPackage');
 
 
     //-------------------------------------------------------------------------------

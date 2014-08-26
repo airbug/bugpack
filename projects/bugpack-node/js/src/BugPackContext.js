@@ -15,7 +15,6 @@ var path                    = require('path');
 var BugPackKey              = require('./BugPackKey');
 var BugPackLibrary          = require('./BugPackLibrary');
 var BugPackSourceProcessor  = require('./BugPackSourceProcessor');
-var BugPackPackage          = require('./BugPackPackage');
 var BugPackRegistry         = require('./BugPackRegistry');
 var BugPackRegistryFile     = require('./BugPackRegistryFile');
 var PathUtil                = require('./PathUtil');
