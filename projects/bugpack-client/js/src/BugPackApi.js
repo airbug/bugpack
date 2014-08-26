@@ -146,14 +146,3 @@ BugPackApi.hasContext = function(contextUrl) {
 BugPackApi.putContext = function(contextUrl, context) {
     BugPackApi.contextUrlToBugPackContext[contextUrl] = context;
 };
-
-var oldRequire = require || undefined;
-var require = function(requireName) {
-    if (requireName === "bugpack") {
-        return BugPackApi;
-    } else if (oldRequire !== undefined) {
-        return oldRequire(requireName);
-    } else {
-        throw new Error("unknown require name '" + requireName + "'");
-    }
-};

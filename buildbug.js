@@ -44,7 +44,7 @@ var uglifyjs            = enableModule("uglifyjs");
 //-------------------------------------------------------------------------------
 
 var name                = "bugpack";
-var version             = "0.1.14";
+var version             = "0.2.0";
 
 
 //-------------------------------------------------------------------------------
@@ -79,6 +79,7 @@ buildProperties({
             ]
         },
         sourcePaths: [
+            "./libraries/bugpack/js/src",
             "./projects/bugpack-node/js/src"
         ],
         readmePath: "./README.md"
@@ -87,11 +88,13 @@ buildProperties({
         name: "{{name}}",
         version: "{{version}}",
         sourcePaths: [
-            "./projects/bugpack-client/js/src/BugPackKey.js",
-            "./projects/bugpack-client/js/src/BugPackPackage.js",
-            "./projects/bugpack-client/js/src/BugPackLibrary.js",
+            "./projects/bugpack-client/js/src/SimpleRequire.js",
+            "./libraries/bugpack/js/src/BugPackFix.js",
+            "./libraries/bugpack/js/src/BugPackKey.js",
+            "./libraries/bugpack/js/src/BugPackPackage.js",
+            "./libraries/bugpack/js/src/BugPackLibrary.js",
             "./projects/bugpack-client/js/src/BugPackSource.js",
-            "./projects/bugpack-client/js/src/BugPackSourceProcessor.js",
+            "./libraries/bugpack/js/src/BugPackSourceProcessor.js",
             "./projects/bugpack-client/js/src/BugPackRegistryEntry.js",
             "./projects/bugpack-client/js/src/BugPackRegistry.js",
             "./projects/bugpack-client/js/src/BugPackRegistryFile.js",
