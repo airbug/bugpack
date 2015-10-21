@@ -110,6 +110,7 @@ require('./BugPackFix').fix(module, "./BugPackSourceProcessor", function(module)
      */
     BugPackSourceProcessor.prototype.processSync = function() {
         if (!this.processed) {
+            this.processingStarted = true;
             this.processSourceSync();
         }
     };

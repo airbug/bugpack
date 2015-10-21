@@ -551,15 +551,9 @@ BugPackContext.prototype.processBugPackSource = function(bugPackSource, callback
 BugPackContext.prototype.processBugPackSourceSync = function(bugPackSource) {
     var sourceProcessor = this.generateBugPackSourceProcessor(bugPackSource);
     if (!sourceProcessor.hasProcessed()) {
-
-        //TODO BRN: What do we do if this is the case?
-
-        //if (!sourceProcessor.hasProcessingStarted()) {
-
+        if (!sourceProcessor.hasProcessingStarted()) {
             sourceProcessor.processSync();
-        //}
-    } else {
-
+        }
     }
 };
 
