@@ -282,12 +282,6 @@ buildTarget("prod").buildFlow(
                         bucket: "{{public-bucket}}"
                     }
                 }),
-                targetTask('npmConfigSet', {
-                    properties: {
-                        config: buildProject.getProperty("npmConfig")
-                    }
-                }),
-                targetTask('npmAddUser'),
                 targetTask('publishNodePackage', {
                     properties: {
                         packageName: "{{node.packageJson.name}}",
