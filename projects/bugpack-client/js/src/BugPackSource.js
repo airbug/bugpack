@@ -131,7 +131,7 @@ require('./BugPackFix').fix(module, "./BugPackSource", function(module) {
             _this.loadComplete();
         };
         scriptLoader.onerror = function(event) {
-            _this.loadComplete(new Error("script loading failed."));
+            _this.loadComplete(new Error("An error occurred while loading script '" + _this.sourceFilePath + "'"));
         };
         lastScript.parentNode.insertBefore(scriptLoader, lastScript.nextSibling);
     };

@@ -133,6 +133,7 @@ BugPackSource.prototype.loadSource = function() {
         require(this.sourceFilePath);
     } catch(e) {
         error = e;
+        error.message = "An error occurred while loading source '" + this.sourceFilePath + "'\n" + error.message;
     }
     this.loadComplete(error);
 };
@@ -146,6 +147,7 @@ BugPackSource.prototype.loadSourceSync = function() {
         require(this.sourceFilePath);
     } catch(e) {
         error = e;
+        error.message = "An error occurred while loading source '" + this.sourceFilePath + "'\n" + error.message;
     }
     this.loadComplete(error);
     if (error) {
